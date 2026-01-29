@@ -1,0 +1,40 @@
+{
+    "name": "sdd-skills-bundle",
+    "version": "1.0.0",
+    "description": "Spec-Driven Development (SDD) skills pack for AI coding assistants",
+    "type": "module",
+    "bin": {
+        "sdd-skills": "./bin/install.mjs"
+    },
+    "files": [
+        "bin/",
+        "prd/",
+        "sa/",
+        "sdd/",
+        "i18n/"
+    ],
+    "scripts": {
+        "install-skills": "node bin/install.mjs"
+    },
+    "keywords": [
+        "sdd",
+        "spec-driven-development",
+        "ai-skills",
+        "prd",
+        "system-analysis",
+        "ai-agent"
+    ],
+    "author": "Tai-ch0802",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Tai-ch0802/skills-bundle.git"
+    },
+    "dependencies": {
+        "@inquirer/prompts": "^7.0.0",
+        "chalk": "^5.3.0"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    }
+}
