@@ -19,7 +19,7 @@ const LANGUAGES = {
     name: 'English',
     path: '',
     messages: {
-      welcome: '🚀 SDD Skills Bundle Installer',
+      welcome: '🚀 Skills Bundle Installer',
       selectLanguage: 'Select your preferred language:',
       selectSkills: 'Select skills to install:',
       selectAgent: 'Select your AI agent type:',
@@ -40,7 +40,7 @@ const LANGUAGES = {
     name: '繁體中文',
     path: 'i18n/zh-TW',
     messages: {
-      welcome: '🚀 SDD 技能包安裝程式',
+      welcome: '🚀 技能包安裝程式',
       selectLanguage: '請選擇您偏好的語言：',
       selectSkills: '請選擇要安裝的技能：',
       selectAgent: '請選擇您的 AI 代理類型：',
@@ -131,7 +131,7 @@ function copySkill(skill, langPath, destBase) {
 
 async function main() {
   console.log('\n' + chalk.bold.cyan('═'.repeat(50)));
-  console.log(chalk.bold.cyan('  🚀 SDD Skills Bundle Installer'));
+  console.log(chalk.bold.cyan('  🚀 Skills Bundle Installer'));
   console.log(chalk.bold.cyan('═'.repeat(50)) + '\n');
 
   // Step 1: Select Language
