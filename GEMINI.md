@@ -1,10 +1,10 @@
-# SDD Skills Bundle
+# Skills Bundle
 
 ## Overview
 
-This repository is a **skill pack** for AI coding assistants implementing **Spec-Driven Development (SDD)**.
+This repository is a **curated collection of AI agent skills** for coding assistants.
 
-It contains three interconnected skills:
+It currently contains the **SDD (Spec-Driven Development)** skill pack:
 - `prd/` - Product Requirement Document guidelines
 - `sa/` - System Analysis methodology
 - `sdd/` - Orchestrating workflow (PRD → SA → Implementation)
@@ -23,9 +23,12 @@ cp -r prd sa sdd /your-project/.agent/skills/
 cp -r i18n/zh-TW/* /your-project/.agent/skills/
 ```
 
-Then invoke by referencing the skill name (e.g., `/sdd` for full workflow).
+Or use the interactive installer:
+```bash
+npx github:Tai-ch0802/skills-bundle
+```
 
-### Key Principle
+### Key Principle (SDD)
 
 > **"No Spec, No Code"** — Every feature requires complete documentation before implementation.
 
@@ -44,9 +47,8 @@ skills-bundle/
 │   └── references/
 ├── i18n/              # Internationalized versions
 │   └── zh-TW/         # Traditional Chinese
-│       ├── prd/
-│       ├── sa/
-│       └── sdd/
+├── bin/
+│   └── install.mjs    # Interactive CLI installer
 └── README.md
 ```
 

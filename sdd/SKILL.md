@@ -15,12 +15,49 @@ This skill integrates **PRD (Requirements)** and **SA (Analysis)** knowledge, de
 4.  **Version Control**: Spec documents are version-controlled with change processes
 5.  **Living Documentation**: Code changes must sync with spec updates to maintain consistency
 
+## Workflow Overview
+
+```mermaid
+flowchart LR
+    A[User Request] --> B[PRD Phase]
+    B --> C{Review}
+    C -->|Approved| D[SA Phase]
+    C -->|Rejected| B
+    D --> E{Review}
+    E -->|Approved| F[Implementation]
+    E -->|Rejected| D
+    F --> G[Verification]
+    G -->|Pass| H[Done]
+    G -->|Fail| F
+```
+
+## Configuration
+
+> ⚠️ **Required**: Before using this skill, customize the spec directory path to match your project structure.
+
+By default, this skill references `/docs/specs/` as the documentation location. Update paths in:
+- This file (`sdd/SKILL.md`)
+- `sdd/references/tasks.md`
+
+### Recommended Directory Structure
+
+```
+your-project/
+├── docs/
+│   └── specs/              ← Customize this path
+│       ├── feature/
+│       │   └── ISSUE-101_feature-name/
+│       │       ├── PRD_spec.md
+│       │       └── SA_spec.md
+│       └── fix/
+│           └── ISSUE-102_bug-name/
+│               ├── PRD_spec.md
+│               └── SA_spec.md
+```
+
 ## Core Workflow
 
 This workflow uses a three-phase development model. All artifacts are stored in a configurable specs directory.
-
-> ⚠️ **Configuration Required**: By default, this skill references `/docs/specs/` as the documentation location. 
-> You should customize this path to match your project structure. See the README for details.
 
 ### Phase 1: Product Requirement (PRD)
 *   **Goal**: Define "What" and "Why".
@@ -106,6 +143,17 @@ After a Spec enters **Frozen** status, any changes require:
 2.  Record change reason in Revision History
 3.  Re-obtain Reviewer approval
 4.  Update related Traceability Matrix
+
+## Skill Contents
+
+```
+sdd/
+├── SKILL.md                           # This file - Orchestration workflow
+└── references/
+    ├── requirements.md                # Quick PRD reference
+    ├── design.md                      # Quick SA reference
+    └── tasks.md                       # Implementation task template
+```
 
 ## References
 
