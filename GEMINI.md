@@ -4,10 +4,9 @@
 
 This repository is a **curated collection of AI agent skills** for coding assistants.
 
-It currently contains the **SDD (Spec-Driven Development)** skill pack:
-- `prd/` - Product Requirement Document guidelines
-- `sa/` - System Analysis methodology
-- `sdd/` - Orchestrating workflow (PRD → SA → Implementation)
+Currently available skill packs:
+- **SDD (Spec-Driven Development)**: `prd/`, `sa/`, `sdd/`
+- **Refactoring**: `refactoring/`
 
 ## For AI Agents
 
@@ -17,7 +16,7 @@ Copy the skill folders to your project's `.agent/skills/` directory:
 
 ```bash
 # English (default)
-cp -r prd sa sdd /your-project/.agent/skills/
+cp -r prd sa sdd refactoring /your-project/.agent/skills/
 
 # Traditional Chinese (繁體中文)
 cp -r i18n/zh-TW/* /your-project/.agent/skills/
@@ -28,25 +27,21 @@ Or use the interactive installer:
 npx github:Tai-ch0802/skills-bundle
 ```
 
-### Key Principle (SDD)
+### Key Principles
 
-> **"No Spec, No Code"** — Every feature requires complete documentation before implementation.
+- **SDD**: "No Spec, No Code" — Every feature requires complete documentation before implementation.
+- **Refactoring**: Identify code smells and apply refactoring techniques based on Refactoring.guru.
 
 ## Project Structure
 
 ```
 skills-bundle/
 ├── prd/               # PRD skill (English)
-│   ├── SKILL.md
-│   └── references/
 ├── sa/                # SA skill (English)
-│   ├── SKILL.md
-│   └── references/
-├── sdd/               # Main orchestration skill (English)
-│   ├── SKILL.md
-│   └── references/
-├── i18n/              # Internationalized versions
-│   └── zh-TW/         # Traditional Chinese
+├── sdd/               # SDD orchestration skill (English)
+├── refactoring/       # Refactoring skill (English)
+├── i18n/
+│   └── zh-TW/         # Traditional Chinese translations
 ├── bin/
 │   └── install.mjs    # Interactive CLI installer
 └── README.md
@@ -56,7 +51,7 @@ skills-bundle/
 
 | Language | Directory | Status |
 |----------|-----------|--------|
-| English | `prd/`, `sa/`, `sdd/` | ✅ Default |
+| English | Root directories | ✅ Default |
 | 繁體中文 | `i18n/zh-TW/` | ✅ Complete |
 
 ## Contributing

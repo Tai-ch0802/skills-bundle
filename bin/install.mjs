@@ -33,6 +33,7 @@ const LANGUAGES = {
         prd: 'Product Requirements Document guidelines',
         sa: 'System Analysis methodology',
         sdd: 'Spec-Driven Development workflow (includes prd, sa)',
+        refactoring: 'Code smell identification and refactoring techniques',
       },
     },
   },
@@ -54,17 +55,19 @@ const LANGUAGES = {
         prd: '產品需求文件指南',
         sa: '系統分析方法論',
         sdd: '規格驅動開發工作流程（包含 prd, sa）',
+        refactoring: '程式碼異味識別與重構技術',
       },
     },
   },
 };
 
-const SKILLS = ['prd', 'sa', 'sdd'];
+const SKILLS = ['prd', 'sa', 'sdd', 'refactoring'];
 
 const DEPENDENCIES = {
   prd: [],
   sa: [],
   sdd: ['prd', 'sa'],
+  refactoring: [],
 };
 
 const AGENT_PRESETS = {

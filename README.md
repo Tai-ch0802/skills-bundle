@@ -11,6 +11,7 @@ This repository contains reusable skill packs that enhance AI coding assistants 
 | Skill Pack | Description |
 |------------|-------------|
 | **[SDD](/sdd/)** | Spec-Driven Development — A "No Spec, No Code" workflow with PRD → SA → Implementation |
+| **[Refactoring](/refactoring/)** | Code smell identification and refactoring techniques based on Refactoring.guru |
 
 ### SDD (Spec-Driven Development)
 
