@@ -1,4 +1,4 @@
-name: "🔄 Sync Upstream Skills (Daily)"
+name: "🔄 Sync Upstream Skills - vudovn/antigravity-kit"
 
 on:
   schedule:
