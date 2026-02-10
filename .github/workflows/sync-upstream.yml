@@ -1,0 +1,193 @@
+name: "🔄 Sync Upstream Skills (Daily)"
+
+on:
+  schedule:
+    # 00:00 UTC+8 = 16:00 UTC (previous day)
+    - cron: "0 16 * * *"
+  workflow_dispatch:
+    inputs:
+      hours_lookback:
+        description: "Hours to look back for changes (default: 24)"
+        required: false
+        default: "24"
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      # ----------------------------------------------------------------
+      # Phase 1: Detect upstream changes
+      # ----------------------------------------------------------------
+      - name: 🔍 Detect upstream changes
+        id: detect
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LOOKBACK_HOURS: ${{ inputs.hours_lookback || '24' }}
+        run: |
+          set -euo pipefail
+
+          UPSTREAM_REPO="vudovn/antigravity-kit"
+          SINCE_DATE=$(date -u -d "${LOOKBACK_HOURS} hours ago" '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null \
+                    || date -u -v-${LOOKBACK_HOURS}H '+%Y-%m-%dT%H:%M:%SZ')
+
+          echo "📅 Checking ${UPSTREAM_REPO} for changes since ${SINCE_DATE}"
+          echo ""
+
+          # --- Collect recent commits ---
+          COMMITS=$(gh api "repos/${UPSTREAM_REPO}/commits?since=${SINCE_DATE}&per_page=100" \
+            --jq '.[] | "- [\(.sha[0:7])](https://github.com/'"${UPSTREAM_REPO}"'/commit/\(.sha)) \(.commit.message | split("\n")[0]) (by @\(.author.login // .commit.author.name))"' \
+            2>/dev/null || echo "")
+
+          # --- Collect merged PRs ---
+          MERGED_PRS=$(gh api "repos/${UPSTREAM_REPO}/pulls?state=closed&sort=updated&direction=desc&per_page=50" \
+            --jq '.[] | select(.merged_at != null) | select(.merged_at >= "'"${SINCE_DATE}"'") | "- PR #\(.number): \(.title) (merged by @\(.merged_by.login // "unknown"))"' \
+            2>/dev/null || echo "")
+
+          # --- Check if any changes found ---
+          if [ -z "${COMMITS}" ] && [ -z "${MERGED_PRS}" ]; then
+            echo "✅ No changes detected in the last ${LOOKBACK_HOURS} hours. Skipping sync."
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "🔔 Changes detected!"
+          echo ""
+
+          # --- Build change summary ---
+          CHANGE_SUMMARY=""
+
+          if [ -n "${COMMITS}" ]; then
+            echo "### Recent Commits:"
+            echo "${COMMITS}"
+            CHANGE_SUMMARY+="## Recent Commits (last ${LOOKBACK_HOURS}h)
+          ${COMMITS}
+
+          "
+          fi
+
+          if [ -n "${MERGED_PRS}" ]; then
+            echo ""
+            echo "### Merged PRs:"
+            echo "${MERGED_PRS}"
+            CHANGE_SUMMARY+="## Merged PRs (last ${LOOKBACK_HOURS}h)
+          ${MERGED_PRS}
+
+          "
+          fi
+
+          # --- Get list of changed files across all commits ---
+          CHANGED_FILES=$(gh api "repos/${UPSTREAM_REPO}/commits?since=${SINCE_DATE}&per_page=100" \
+            --jq '.[].sha' 2>/dev/null | while read -r sha; do
+              gh api "repos/${UPSTREAM_REPO}/commits/${sha}" \
+                --jq '.files[].filename' 2>/dev/null
+            done | sort -u || echo "")
+
+          if [ -n "${CHANGED_FILES}" ]; then
+            CHANGE_SUMMARY+="## Changed Files
+          ${CHANGED_FILES}
+          "
+          fi
+
+          echo "has_changes=true" >> "$GITHUB_OUTPUT"
+
+          # Store multi-line summary in a file for the next step
+          echo "${CHANGE_SUMMARY}" > /tmp/change_summary.txt
+          echo "summary_path=/tmp/change_summary.txt" >> "$GITHUB_OUTPUT"
+
+      # ----------------------------------------------------------------
+      # Phase 2: Invoke Jules to sync (only if changes detected)
+      # ----------------------------------------------------------------
+      - name: 🤖 Invoke Jules to sync upstream changes
+        if: steps.detect.outputs.has_changes == 'true'
+        uses: google-labs-code/jules-invoke@v1
+        with:
+          jules_api_key: ${{ secrets.JULES_API_KEY }}
+          prompt: |
+            # Task: Sync Upstream Skill Changes
+
+            You are a skill synchronization agent for the `skills-bundle` project.
+            The upstream repository `https://github.com/vudovn/antigravity-kit` has had
+            changes in the past 24 hours. Your job is to sync those changes into this project.
+
+            ## Upstream Changes Detected
+
+            ${{ steps.detect.outputs.has_changes == 'true' && '(See change summary below)' || 'None' }}
+
+            ## Instructions
+
+            ### Step 1: Identify what changed upstream
+
+            Clone or fetch `https://github.com/vudovn/antigravity-kit` and compare with
+            the skill directories in THIS repo. Focus only on skill directories that exist
+            both upstream and locally. The upstream skill directories map 1:1 to local
+            directories of the same name.
+
+            **Skills that came from upstream (antigravity-kit):**
+            api-patterns, app-builder, architecture, bash-linux, behavioral-modes,
+            brainstorming, clean-code, code-review-checklist, database-design,
+            deployment-procedures, documentation-templates, frontend-design,
+            game-development, geo-fundamentals, i18n-localization, intelligent-routing,
+            lint-and-validate, mcp-builder, mobile-design, nextjs-react-expert,
+            nodejs-best-practices, parallel-agents, performance-profiling, plan-writing,
+            powershell-windows, python-patterns, red-team-tactics, rust-pro,
+            seo-fundamentals, server-management, systematic-debugging, tailwind-patterns,
+            tdd-workflow, testing-patterns, vulnerability-scanner, web-design-guidelines,
+            webapp-testing
+
+            **Skills NOT from upstream (do NOT modify):**
+            prd, sa, sdd, refactoring, testing-mastery, code-quality
+
+            ### Step 2: Sync changed skills
+
+            For each skill that has changes upstream:
+            1. Copy the updated files from upstream to the corresponding local directory
+            2. If upstream added a NEW skill directory that doesn't exist locally,
+               create it and add it to `bin/install.mjs`:
+               - Add to the `SKILLS` array (alphabetical order)
+               - Add to `DEPENDENCIES` (empty array if no dependencies)
+               - Add English description in `LANGUAGES.en.messages.skillDescriptions`
+               - Add Traditional Chinese (zh-TW) description in `LANGUAGES['zh-TW'].messages.skillDescriptions`
+            3. If upstream deleted a skill, remove it from the local repo and `bin/install.mjs`
+
+            ### Step 3: Update zh-TW translations
+
+            For each modified or new skill, update the corresponding file under
+            `i18n/zh-TW/<skill-name>/`. Translate the SKILL.md and any reference files
+            to Traditional Chinese. Keep the same file structure.
+
+            ### Step 4: Handle composite skills
+
+            If changes affect `tdd-workflow`, `testing-patterns`, or `webapp-testing`,
+            also update `testing-mastery/` (the unified composite skill) accordingly:
+            - `tdd-workflow` changes → update `testing-mastery/references/tdd-cycle.md`
+            - `testing-patterns` changes → update `testing-mastery/references/unit-integration.md`
+            - `webapp-testing` changes → update `testing-mastery/references/e2e-playwright.md`
+
+            If changes affect `clean-code` or `code-review-checklist`,
+            also update `code-quality/SKILL.md` accordingly.
+
+            Don't forget to update the zh-TW versions of composite skills too.
+
+            ### Step 5: Create PR
+
+            Create a pull request with:
+            - **Title**: `sync: update skills from upstream antigravity-kit`
+            - **Body**: Include a clear summary of:
+              - Which upstream commits/PRs triggered this sync
+              - Which skill directories were updated
+              - What changes were made to `bin/install.mjs` (if any)
+              - What zh-TW translations were added/updated
+
+            ## Rules
+
+            - Do NOT modify skills that are NOT from upstream (prd, sa, sdd, refactoring)
+            - Do NOT modify testing-mastery or code-quality SKILL.md root files unless
+              the upstream source skills (tdd-workflow, testing-patterns, webapp-testing,
+              clean-code, code-review-checklist) were changed
+            - ONLY create a PR if there are actual file changes to sync
+            - If after analysis no files actually differ, do NOT create a PR
+            - All existing tests and lint must pass
+            - Keep `bin/install.mjs` consistent with locally available skill directories
