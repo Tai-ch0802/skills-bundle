@@ -18,8 +18,7 @@
         "bash-linux/",
         "behavioral-modes/",
         "brainstorming/",
-        "clean-code/",
-        "code-review-checklist/",
+        "code-quality/",
         "database-design/",
         "deployment-procedures/",
         "documentation-templates/",
@@ -44,11 +43,9 @@
         "server-management/",
         "systematic-debugging/",
         "tailwind-patterns/",
-        "tdd-workflow/",
-        "testing-patterns/",
+        "testing-mastery/",
         "vulnerability-scanner/",
         "web-design-guidelines/",
-        "webapp-testing/",
         "i18n/"
     ],
     "scripts": {
