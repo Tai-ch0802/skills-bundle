@@ -7,6 +7,7 @@ This repository is a **curated collection of AI agent skills** for coding assist
 Currently available skill packs:
 - **SDD (Spec-Driven Development)**: `prd/`, `sa/`, `sdd/`
 - **Refactoring**: `refactoring/`
+- **Gemini API**: `gemini-api-dev/`
 
 ## For AI Agents
 

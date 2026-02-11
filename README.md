@@ -14,9 +14,10 @@ This project integrates skills from multiple sources:
 |--------|--------|--------|
 | **Original** | `prd`, `sa`, `sdd`, `refactoring` | [@Tai-ch0802](https://github.com/Tai-ch0802) |
 | **[antigravity-kit](https://github.com/vudovn/antigravity-kit)** | 37 skills (see below) | [@vudovn](https://github.com/vudovn) |
+| **[gemini-skills](https://github.com/google-gemini/gemini-skills)** | `gemini-api-dev` | [@google-gemini](https://github.com/google-gemini) |
 | **Composite (new)** | `testing-mastery`, `code-quality` | Merged & curated by [@Tai-ch0802](https://github.com/Tai-ch0802) |
 
-## Available Skills (35)
+## Available Skills (36)
 
 ### SDD Pack (Original)
 
@@ -70,6 +71,12 @@ This project integrates skills from multiple sources:
 | **[web-design-guidelines](./web-design-guidelines/SKILL.md)** | UI code review for Web compliance |
 
 </details>
+
+### Gemini API Skills (from [google-gemini/gemini-skills](https://github.com/google-gemini/gemini-skills))
+
+| Skill | Description |
+|-------|-------------|
+| **[gemini-api-dev](./gemini-api-dev/SKILL.md)** | Gemini API development — SDK usage, multimodal, function calling, structured output |
 
 ### Composite Skills (Merged & Curated)
 
@@ -166,4 +173,5 @@ skills-bundle/
 
 - **SDD Pack & Refactoring** — Original work by [@Tai-ch0802](https://github.com/Tai-ch0802)
 - **Antigravity Kit Skills** — From [vudovn/antigravity-kit](https://github.com/vudovn/antigravity-kit) by [@vudovn](https://github.com/vudovn)
+- **Gemini API Skills** — From [google-gemini/gemini-skills](https://github.com/google-gemini/gemini-skills) by [@google-gemini](https://github.com/google-gemini)
 - **Composite Skills & Translations** — Curated and translated by [@Tai-ch0802](https://github.com/Tai-ch0802)
