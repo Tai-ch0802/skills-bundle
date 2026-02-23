@@ -94,11 +94,11 @@ ${CHANGED_FILES}
           echo "has_changes=true" >> "$GITHUB_OUTPUT"
 
           # Store multi-line summary via GITHUB_OUTPUT heredoc delimiter
-          {
-            echo "change_summary<<SUMMARY_EOF"
-            echo "${CHANGE_SUMMARY}"
-            echo "SUMMARY_EOF"
-          } >> "$GITHUB_OUTPUT"
+          cat << 'SUMMARY_EOF' >> "$GITHUB_OUTPUT"
+change_summary<<EOF
+${CHANGE_SUMMARY}
+EOF
+SUMMARY_EOF
 
       # ----------------------------------------------------------------
       # Phase 2: Invoke Jules to sync (only if changes detected)
