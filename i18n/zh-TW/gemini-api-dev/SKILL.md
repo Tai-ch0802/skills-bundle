@@ -1,6 +1,6 @@
 ---
 name: gemini-api-dev
-description: 在建構 Gemini 模型應用程式、使用 Gemini API、處理多模態內容（文字、圖片、音訊、影片）、實作函式呼叫、使用結構化輸出，或需要最新模型規格時使用此技能。涵蓋 SDK 使用（Python 的 google-genai、JavaScript/TypeScript 的 @google/genai）、模型選擇與 API 功能。
+description: 在建構 Gemini 模型應用程式、使用 Gemini API、處理多模態內容（文字、圖片、音訊、影片）、實作函式呼叫、使用結構化輸出，或需要最新模型規格時使用此技能。涵蓋 SDK 使用（Python 的 google-genai、JavaScript/TypeScript 的 @google/genai、Java 的 com.google.genai:google-genai、Go 的 google.golang.org/genai）、模型選擇與 API 功能。
 ---
 
 # Gemini API 開發技能
@@ -31,6 +31,21 @@ Gemini API 提供存取 Google 最先進 AI 模型的能力。主要功能包括
 - **Python**：`google-genai`，安裝指令 `pip install google-genai`
 - **JavaScript/TypeScript**：`@google/genai`，安裝指令 `npm install @google/genai`
 - **Go**：`google.golang.org/genai`，安裝指令 `go get google.golang.org/genai`
+- **Java**：
+  - groupId：`com.google.genai`，artifactId：`google-genai`
+  - 最新版本可在此找到：https://central.sonatype.com/artifact/com.google.genai/google-genai/versions（我們稱之為 `LAST_VERSION`）
+  - 在 `build.gradle` 中安裝：
+    ```
+    implementation("com.google.genai:google-genai:${LAST_VERSION}")
+    ```
+  - 在 `pom.xml` 中安裝 Maven 相依性：
+    ```
+    <dependency>
+	    <groupId>com.google.genai</groupId>
+	    <artifactId>google-genai</artifactId>
+	    <version>${LAST_VERSION}</version>
+	</dependency>
+    ```
 
 > [!WARNING]
 > 舊版 SDK `google-generativeai`（Python）和 `@google/generative-ai`（JS）已棄用。請儘速遷移至上方的新 SDK，並參閱遷移指南。
@@ -85,6 +100,26 @@ func main() {
 	}
 
 	fmt.Println(resp.Text)
+}
+```
+
+### Java
+
+```java
+import com.google.genai.Client;
+import com.google.genai.types.GenerateContentResponse;
+
+public class GenerateTextFromTextInput {
+  public static void main(String[] args) {
+    Client client = new Client();
+    GenerateContentResponse response =
+        client.models.generateContent(
+            "gemini-3-flash-preview",
+            "解釋量子計算",
+            null);
+
+    System.out.println(response.text());
+  }
 }
 ```
 
