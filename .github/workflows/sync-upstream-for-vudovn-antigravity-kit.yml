@@ -63,9 +63,9 @@ jobs:
             echo "### Recent Commits:"
             echo "${COMMITS}"
             CHANGE_SUMMARY+="## Recent Commits (last ${LOOKBACK_HOURS}h)
-${COMMITS}
+          ${COMMITS}
 
-"
+          "
           fi
 
           if [ -n "${MERGED_PRS}" ]; then
@@ -73,9 +73,9 @@ ${COMMITS}
             echo "### Merged PRs:"
             echo "${MERGED_PRS}"
             CHANGE_SUMMARY+="## Merged PRs (last ${LOOKBACK_HOURS}h)
-${MERGED_PRS}
+          ${MERGED_PRS}
 
-"
+          "
           fi
 
           # --- Get list of changed files across all commits ---
@@ -87,18 +87,18 @@ ${MERGED_PRS}
 
           if [ -n "${CHANGED_FILES}" ]; then
             CHANGE_SUMMARY+="## Changed Files
-${CHANGED_FILES}
-"
+          ${CHANGED_FILES}
+          "
           fi
 
           echo "has_changes=true" >> "$GITHUB_OUTPUT"
 
           # Store multi-line summary via GITHUB_OUTPUT heredoc delimiter
           cat << 'SUMMARY_EOF' >> "$GITHUB_OUTPUT"
-change_summary<<EOF
-${CHANGE_SUMMARY}
-EOF
-SUMMARY_EOF
+          change_summary<<EOF
+          ${CHANGE_SUMMARY}
+          EOF
+          SUMMARY_EOF
 
       # ----------------------------------------------------------------
       # Phase 2: Invoke Jules to sync (only if changes detected)
