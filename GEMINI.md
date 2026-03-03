@@ -2,7 +2,7 @@
 
 ## Overview
 
-This repository is a **curated collection of 41 AI agent skills** for coding assistants, bundled from multiple sources with an interactive installer and Traditional Chinese translations.
+This repository is a **curated collection of 42 AI agent skills** for coding assistants, bundled from multiple sources with an interactive installer and Traditional Chinese translations.
 
 ## Skill Categories
 
@@ -10,7 +10,7 @@ This repository is a **curated collection of 41 AI agent skills** for coding ass
 |----------|-------|---------|
 | **SDD Pack** (original) | 4 | `prd`, `sa`, `sdd`, `refactoring` |
 | **Antigravity Kit** (from vudovn) | 31 | `api-patterns`, `architecture`, `frontend-design`, `database-design`, … |
-| **Gemini API** (from google-gemini) | 1 | `gemini-api-dev` |
+| **Gemini API** (from google-gemini) | 2 | `gemini-api-dev`, `gemini-live-api-dev` |
 | **Composite** (merged & curated) | 2 | `testing-mastery`, `code-quality` |
 | **Cloud & Memory** (original) | 3 | `pcloud`, `agent-brain` |
 
@@ -56,6 +56,7 @@ skills-bundle/
 ├── pcloud/                # pCloud cloud storage API
 ├── agent-brain/           # Persistent cross-session memory
 ├── gemini-api-dev/        # Gemini API development
+├── gemini-live-api-dev/   # Gemini Live API development
 ├── api-patterns/          # ┐
 ├── architecture/          # │ Antigravity Kit skills
 ├── frontend-design/       # │ (31 skills from vudovn)
