@@ -45,7 +45,7 @@ ensure_remote_folder() {
   fi
 }
 
-# Upload a single file to pCloud
+# Upload a single file to pCloud (delete-then-upload to avoid duplicates)
 upload_file() {
   local local_path="$1"
   local remote_dir="$2"
@@ -54,11 +54,14 @@ upload_file() {
 
   local filename
   filename=$(basename "${local_path}")
+  local remote_file_path="${REMOTE_BASE}${remote_dir}/${filename}"
+
+  # Delete existing file first (ignore errors if file doesn't exist)
+  curl -s -H "${AUTH_HEADER}" "${API}/deletefile?path=${remote_file_path}" > /dev/null 2>&1 || true
 
   curl -s -X POST "${API}/uploadfile" \
     -H "${AUTH_HEADER}" \
-    -F "path=${REMOTE_BASE}${remote_dir}/" \
-    -F "renameifexists=0" \
+    -F "path=${REMOTE_BASE}${remote_dir}" \
     -F "filename=${filename}" \
     -F "file=@${local_path}" > /dev/null 2>&1
 
