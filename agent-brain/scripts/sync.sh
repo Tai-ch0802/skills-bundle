@@ -57,12 +57,12 @@ upload_file() {
 
   curl -s -X POST "${API}/uploadfile" \
     -H "${AUTH_HEADER}" \
-    -F "path=${REMOTE_BASE}${remote_dir}" \
+    -F "path=${REMOTE_BASE}${remote_dir}/" \
     -F "renameifexists=0" \
     -F "filename=${filename}" \
     -F "file=@${local_path}" > /dev/null 2>&1
 
-  log "↑ ${remote_dir}/${filename}"
+  log "↑ ${remote_dir:+${remote_dir}/}${filename}"
 }
 
 # Download a file from pCloud
@@ -136,6 +136,8 @@ do_push() {
     local relative="${file#${BRAIN_DIR}}"
     local dir
     dir=$(dirname "${relative}")
+    # Normalize root "/" to empty string to avoid double-slash in remote paths
+    [[ "${dir}" == "/" ]] && dir=""
 
     # Skip files that should not be synced
     case "${relative}" in
