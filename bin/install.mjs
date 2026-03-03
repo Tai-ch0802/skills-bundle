@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { select, checkbox, input, confirm } from '@inquirer/prompts';
+import { homedir } from 'os';
 import chalk from 'chalk';
 import { existsSync, mkdirSync, cpSync, readdirSync } from 'fs';
 import { join, dirname, resolve } from 'path';
@@ -21,6 +22,9 @@ const LANGUAGES = {
     messages: {
       welcome: '🚀 Skills Bundle Installer',
       selectLanguage: 'Select your preferred language:',
+      selectScope: 'Where do you want to install skills?',
+      scopeProject: '📁 Project directory (for project-specific skills)',
+      scopeGlobal: '🌐 Global directory (for cross-project skills like agent-brain)',
       selectPreset: 'Start with a preset or choose custom:',
       selectSkills: 'Select skills to install:',
       selectAgent: 'Select your AI agent type:',
@@ -80,6 +84,8 @@ const LANGUAGES = {
         'testing-mastery': 'Unified testing — TDD, unit/integration patterns, E2E/Playwright (merged from tdd-workflow + testing-patterns + webapp-testing)',
         'vulnerability-scanner': 'Vulnerability analysis — OWASP 2025, supply chain security',
         'web-design-guidelines': 'UI code review for Web Interface Guidelines compliance',
+        pcloud: 'pCloud cloud storage API integration — file management, sharing, streaming, OAuth 2.0',
+        'agent-brain': 'Persistent cross-session memory system — digital twin brain with pCloud sync',
       },
     },
   },
@@ -89,6 +95,9 @@ const LANGUAGES = {
     messages: {
       welcome: '🚀 技能包安裝程式',
       selectLanguage: '請選擇您偏好的語言：',
+      selectScope: '您想將技能安裝到哪裡？',
+      scopeProject: '📁 專案目錄（適合專案特定技能）',
+      scopeGlobal: '🌐 全域目錄（適合跨專案技能，如 agent-brain）',
       selectPreset: '選擇預設組合或自訂：',
       selectSkills: '請選擇要安裝的技能：',
       selectAgent: '請選擇您的 AI 代理類型：',
@@ -148,6 +157,8 @@ const LANGUAGES = {
         'testing-mastery': '統一測試技能 — TDD、單元/整合模式、E2E/Playwright（合併自 tdd-workflow + testing-patterns + webapp-testing）',
         'vulnerability-scanner': '弱點分析 — OWASP 2025、供應鏈安全',
         'web-design-guidelines': 'UI 程式碼審查，符合 Web 介面指南',
+        pcloud: 'pCloud 雲端儲存 API 整合 — 檔案管理、分享、串流、OAuth 2.0',
+        'agent-brain': '持久化跨 Session 記憶系統 — 數位孿生大腦，搭配 pCloud 同步',
       },
     },
   },
@@ -167,6 +178,8 @@ const SKILLS = [
   'red-team-tactics', 'rust-pro', 'seo-fundamentals', 'server-management',
   'systematic-debugging', 'tailwind-patterns', 'testing-mastery',
   'vulnerability-scanner', 'web-design-guidelines',
+  // Cloud & Memory Skills
+  'pcloud', 'agent-brain',
 ];
 
 const DEPENDENCIES = {
@@ -224,6 +237,10 @@ const DEPENDENCIES = {
   'rust-pro': [],
   'server-management': [],
   'systematic-debugging': [],
+
+  // --- Cloud & Memory ---
+  pcloud: [],
+  'agent-brain': ['pcloud'],
 };
 
 const SKILL_PRESETS = {
@@ -259,17 +276,29 @@ const SKILL_PRESETS = {
 };
 
 const AGENT_PRESETS = {
-  antigravity: {
-    name: 'Antigravity / Gemini CLI',
-    path: '.agent/skills',
+  project: {
+    antigravity: {
+      name: 'Antigravity / Gemini CLI',
+      path: '.agent/skills',
+    },
+    cursor: {
+      name: 'Cursor',
+      path: '.cursor/skills',
+    },
+    custom: {
+      name: 'Custom / Other',
+      path: null,
+    },
   },
-  cursor: {
-    name: 'Cursor',
-    path: '.cursor/skills',
-  },
-  custom: {
-    name: 'Custom / Other',
-    path: null,
+  global: {
+    antigravity: {
+      name: 'Antigravity (Global)',
+      path: join(homedir(), '.gemini', 'antigravity', 'skills'),
+    },
+    custom: {
+      name: 'Custom / Other',
+      path: null,
+    },
   },
 };
 
@@ -381,10 +410,21 @@ async function main() {
     );
   }
 
-  // Step 3: Select Installation Path
+  // Step 3: Select Installation Scope (global vs project)
+  const installScope = await select({
+    message: msg.selectScope,
+    choices: [
+      { name: msg.scopeProject, value: 'project' },
+      { name: msg.scopeGlobal, value: 'global' },
+    ],
+  });
+
+  const scopePresets = AGENT_PRESETS[installScope];
+
+  // Step 4: Select Agent / Path
   const agentType = await select({
     message: msg.selectAgent,
-    choices: Object.entries(AGENT_PRESETS).map(([key, preset]) => ({
+    choices: Object.entries(scopePresets).map(([key, preset]) => ({
       name: preset.name + (preset.path ? ` (${preset.path})` : ''),
       value: key,
     })),
@@ -392,16 +432,21 @@ async function main() {
 
   let installPath;
   if (agentType === 'custom') {
+    const defaultPath = installScope === 'global'
+      ? join(homedir(), '.gemini', 'antigravity', 'skills')
+      : '.agent/skills';
     installPath = await input({
       message: msg.inputPath,
-      default: '.agent/skills',
+      default: defaultPath,
     });
   } else {
-    installPath = AGENT_PRESETS[agentType].path;
+    installPath = scopePresets[agentType].path;
   }
 
-  // Resolve to absolute path from cwd
-  const absolutePath = resolve(process.cwd(), installPath);
+  // Resolve to absolute path
+  const absolutePath = installScope === 'global'
+    ? resolve(installPath)
+    : resolve(process.cwd(), installPath);
 
   // Step 4: Confirm Installation
   console.log(chalk.dim(`\n📁 Installation path: ${absolutePath}`));

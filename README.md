@@ -16,8 +16,9 @@ This project integrates skills from multiple sources:
 | **[antigravity-kit](https://github.com/vudovn/antigravity-kit)** | 37 skills (see below) | [@vudovn](https://github.com/vudovn) |
 | **[gemini-skills](https://github.com/google-gemini/gemini-skills)** | `gemini-api-dev` | [@google-gemini](https://github.com/google-gemini) |
 | **Composite (new)** | `testing-mastery`, `code-quality` | Merged & curated by [@Tai-ch0802](https://github.com/Tai-ch0802) |
+| **Cloud & Memory** | `pcloud`, `agent-brain` | [@Tai-ch0802](https://github.com/Tai-ch0802) |
 
-## Available Skills (36)
+## Available Skills (38)
 
 ### SDD Pack (Original)
 
@@ -85,6 +86,15 @@ This project integrates skills from multiple sources:
 | **[testing-mastery](./testing-mastery/SKILL.md)** | `tdd-workflow` + `testing-patterns` + `webapp-testing` | Unified testing — TDD, unit/integration, E2E/Playwright |
 | **[code-quality](./code-quality/SKILL.md)** | `clean-code` + `code-review-checklist` | Coding standards & code review guidelines |
 
+### Cloud & Memory Skills
+
+| Skill | Description |
+|-------|-------------|
+| **[pcloud](./pcloud/SKILL.md)** | pCloud cloud storage API — file management, sharing, streaming, OAuth 2.0, SDKs |
+| **[agent-brain](./agent-brain/SKILL.md)** | Persistent cross-session memory — digital twin brain with pCloud sync |
+
+> **Note**: `agent-brain` depends on `pcloud` — installing it will auto-include the pCloud skill.
+
 ### Dependency Chains
 
 Skills are linked by meaningful dependencies — installing one will auto-include its prerequisites:
@@ -103,6 +113,7 @@ graph TD
     SA[sa] --> SDD
     PW[plan-writing] --> AB[app-builder]
     ARCH[architecture] --> AB
+    PC[pcloud] --> BRAIN[agent-brain]
 ```
 
 ## Installation
@@ -117,7 +128,8 @@ The installer guides you through:
 1. 🌐 **Language** — English or 繁體中文
 2. 🎯 **Preset** — Full-Stack Web, Mobile, Security Expert, Architect, SDD, or Custom
 3. 📦 **Skills** — Fine-tune selection (preset pre-checks relevant skills)
-4. 📁 **Path** — Preset paths for popular AI agents or custom path
+4. 📂 **Scope** — Project directory or global (`~/.gemini/antigravity/skills/`)
+5. 📁 **Path** — Preset paths for popular AI agents or custom path
 
 ### Manual Installation
 
@@ -152,6 +164,8 @@ skills-bundle/
 ├── refactoring/         # Refactoring skill (original)
 ├── testing-mastery/     # Composite: unified testing
 ├── code-quality/        # Composite: standards + review
+├── pcloud/              # pCloud cloud storage API skill
+├── agent-brain/         # Persistent cross-session memory
 ├── api-patterns/        # ┐
 ├── architecture/        # │
 ├── frontend-design/     # │ Antigravity Kit skills
@@ -174,4 +188,5 @@ skills-bundle/
 - **SDD Pack & Refactoring** — Original work by [@Tai-ch0802](https://github.com/Tai-ch0802)
 - **Antigravity Kit Skills** — From [vudovn/antigravity-kit](https://github.com/vudovn/antigravity-kit) by [@vudovn](https://github.com/vudovn)
 - **Gemini API Skills** — From [google-gemini/gemini-skills](https://github.com/google-gemini/gemini-skills) by [@google-gemini](https://github.com/google-gemini)
+- **Cloud & Memory Skills** — pCloud API integration and agent-brain by [@Tai-ch0802](https://github.com/Tai-ch0802)
 - **Composite Skills & Translations** — Curated and translated by [@Tai-ch0802](https://github.com/Tai-ch0802)
