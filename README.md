@@ -13,12 +13,12 @@ This project integrates skills from multiple sources:
 | Source | Skills | Author |
 |--------|--------|--------|
 | **Original** | `prd`, `sa`, `sdd`, `refactoring` | [@Tai-ch0802](https://github.com/Tai-ch0802) |
-| **[antigravity-kit](https://github.com/vudovn/antigravity-kit)** | 37 skills (see below) | [@vudovn](https://github.com/vudovn) |
+| **[antigravity-kit](https://github.com/vudovn/antigravity-kit)** | 31 skills (see below) | [@vudovn](https://github.com/vudovn) |
 | **[gemini-skills](https://github.com/google-gemini/gemini-skills)** | `gemini-api-dev` | [@google-gemini](https://github.com/google-gemini) |
 | **Composite (new)** | `testing-mastery`, `code-quality` | Merged & curated by [@Tai-ch0802](https://github.com/Tai-ch0802) |
 | **Cloud & Memory** | `pcloud`, `agent-brain` | [@Tai-ch0802](https://github.com/Tai-ch0802) |
 
-## Available Skills (38)
+## Available Skills (41)
 
 ### SDD Pack (Original)
 

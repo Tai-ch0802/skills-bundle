@@ -2,50 +2,70 @@
 
 ## Overview
 
-This repository is a **curated collection of AI agent skills** for coding assistants.
+This repository is a **curated collection of 41 AI agent skills** for coding assistants, bundled from multiple sources with an interactive installer and Traditional Chinese translations.
 
-Currently available skill packs:
-- **SDD (Spec-Driven Development)**: `prd/`, `sa/`, `sdd/`
-- **Refactoring**: `refactoring/`
-- **Gemini API**: `gemini-api-dev/`
+## Skill Categories
+
+| Category | Count | Examples |
+|----------|-------|---------|
+| **SDD Pack** (original) | 4 | `prd`, `sa`, `sdd`, `refactoring` |
+| **Antigravity Kit** (from vudovn) | 31 | `api-patterns`, `architecture`, `frontend-design`, `database-design`, … |
+| **Gemini API** (from google-gemini) | 1 | `gemini-api-dev` |
+| **Composite** (merged & curated) | 2 | `testing-mastery`, `code-quality` |
+| **Cloud & Memory** (original) | 3 | `pcloud`, `agent-brain` |
+
+> **Core Principle (SDD)**: "No Spec, No Code" — Every feature requires complete documentation before implementation.
 
 ## For AI Agents
 
 ### Using This Skill Pack
 
-Copy the skill folders to your project's `.agent/skills/` directory:
+Use the interactive installer:
+```bash
+npx github:Tai-ch0802/skills-bundle
+```
 
+Or copy skill folders directly:
 ```bash
 # English (default)
 cp -r prd sa sdd refactoring /your-project/.agent/skills/
 
 # Traditional Chinese (繁體中文)
-cp -r i18n/zh-TW/* /your-project/.agent/skills/
+cp -r i18n/zh-TW/prd i18n/zh-TW/sa i18n/zh-TW/sdd /your-project/.agent/skills/
 ```
 
-Or use the interactive installer:
-```bash
-npx github:Tai-ch0802/skills-bundle
-```
+### Dependency Chains
 
-### Key Principles
-
-- **SDD**: "No Spec, No Code" — Every feature requires complete documentation before implementation.
-- **Refactoring**: Identify code smells and apply refactoring techniques based on Refactoring.guru.
+Skills are linked by dependencies — installing one auto-includes prerequisites:
+- `sdd` → `prd`, `sa`
+- `refactoring` → `code-quality`
+- `testing-mastery` → `code-quality`
+- `agent-brain` → `pcloud`
+- `app-builder` → `plan-writing`, `architecture`
 
 ## Project Structure
 
 ```
 skills-bundle/
-├── prd/               # PRD skill (English)
-├── sa/                # SA skill (English)
-├── sdd/               # SDD orchestration skill (English)
-├── refactoring/       # Refactoring skill (English)
+├── prd/                   # SDD: Product Requirements
+├── sa/                    # SDD: System Analysis
+├── sdd/                   # SDD: Orchestration
+├── refactoring/           # Refactoring skill
+├── testing-mastery/       # Composite: unified testing
+├── code-quality/          # Composite: standards + review
+├── pcloud/                # pCloud cloud storage API
+├── agent-brain/           # Persistent cross-session memory
+├── gemini-api-dev/        # Gemini API development
+├── api-patterns/          # ┐
+├── architecture/          # │ Antigravity Kit skills
+├── frontend-design/       # │ (31 skills from vudovn)
+├── ...                    # ┘
 ├── i18n/
-│   └── zh-TW/         # Traditional Chinese translations
+│   └── zh-TW/             # Traditional Chinese translations
 ├── bin/
-│   └── install.mjs    # Interactive CLI installer
-└── README.md
+│   └── install.mjs        # Interactive CLI installer
+├── .github/workflows/     # Upstream sync GitHub Actions
+└── package.json
 ```
 
 ## Available Languages
@@ -62,3 +82,4 @@ When modifying skills:
 2. Test skill invocation with a sample project
 3. Update templates in `references/` as needed
 4. When adding translations, mirror the English structure under `i18n/{locale}/`
+5. Run the installer to verify new skills are correctly listed

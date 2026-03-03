@@ -1,5 +1,5 @@
 {
-    "name": "sdd-skills-bundle",
+    "name": "skills-bundle",
     "version": "2.0.0",
     "description": "Curated collection of AI agent skills for coding assistants",
     "type": "module",
@@ -12,6 +12,7 @@
         "sa/",
         "sdd/",
         "refactoring/",
+        "agent-brain/",
         "api-patterns/",
         "app-builder/",
         "architecture/",
@@ -34,6 +35,7 @@
         "nextjs-react-expert/",
         "nodejs-best-practices/",
         "parallel-agents/",
+        "pcloud/",
         "performance-profiling/",
         "plan-writing/",
         "powershell-windows/",
