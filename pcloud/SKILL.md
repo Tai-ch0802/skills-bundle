@@ -84,11 +84,12 @@ All methods accept both `GET` and `POST`. Base URL: `https://api.pcloud.com/METH
 
 ```bash
 # GET request
-curl "https://api.pcloud.com/listfolder?folderid=0&auth=TOKEN"
+curl -s -H "Authorization: Bearer TOKEN" "https://api.pcloud.com/listfolder?folderid=0"
 
 # POST request
-curl -X POST "https://api.pcloud.com/listfolder" \
-  -d "folderid=0" -d "auth=TOKEN"
+curl -s -X POST "https://api.pcloud.com/listfolder" \
+  -H "Authorization: Bearer TOKEN" \
+  -d "folderid=0"
 ```
 
 ### Response Format
@@ -160,12 +161,12 @@ Every file/folder returns a metadata object:
 
 ### List folder contents
 ```bash
-curl "https://api.pcloud.com/listfolder?folderid=0&recursive=1&auth=TOKEN"
+curl -s -H "Authorization: Bearer TOKEN" "https://api.pcloud.com/listfolder?folderid=0&recursive=1"
 ```
 
 ### Upload a file
 ```bash
-curl -F "auth=TOKEN" -F "folderid=0" -F "file=@photo.jpg" \
+curl -s -H "Authorization: Bearer TOKEN" -F "folderid=0" -F "file=@photo.jpg" \
   https://api.pcloud.com/uploadfile
 ```
 

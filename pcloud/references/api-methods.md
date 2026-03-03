@@ -28,7 +28,7 @@ Complete reference of all pCloud API methods organized by category. Base URL: `h
 | Method | Auth | Description |
 |--------|------|-------------|
 | `getdigest` | No | Get a digest for password hashing (used in digest-based login) |
-| `userinfo` | Yes | Get user account information. Pass `getauth=1` on login to receive auth token |
+| `userinfo` | Yes | Get user account information |
 | `supportedlanguages` | No | List supported languages |
 | `setlanguage` | Yes | Set user's language |
 | `feedback` | Yes | Send feedback to pCloud |
@@ -55,7 +55,7 @@ Complete reference of all pCloud API methods organized by category. Base URL: `h
 ### listfolder Example
 
 ```bash
-curl "https://api.pcloud.com/listfolder?folderid=0&auth=TOKEN"
+curl -s -H "Authorization: Bearer TOKEN" "https://api.pcloud.com/listfolder?folderid=0"
 ```
 
 Response:
@@ -94,7 +94,7 @@ Response:
 
 ```bash
 curl -X POST "https://api.pcloud.com/uploadfile" \
-  -F "auth=TOKEN" \
+  -H "Authorization: Bearer TOKEN" \
   -F "folderid=0" \
   -F "renameifexists=1" \
   -F "file=@photo.jpg"
@@ -153,7 +153,7 @@ Response:
 ### getfilelink Usage
 
 ```bash
-curl "https://api.pcloud.com/getfilelink?fileid=123&auth=TOKEN"
+curl -s -H "Authorization: Bearer TOKEN" "https://api.pcloud.com/getfilelink?fileid=123"
 ```
 Response:
 ```json

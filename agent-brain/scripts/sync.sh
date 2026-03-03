@@ -15,7 +15,7 @@ fi
 
 source "${ENV_FILE}"
 API="https://${PCLOUD_API_HOST}"
-AUTH="auth=${PCLOUD_ACCESS_TOKEN}"
+AUTH_HEADER="Authorization: Bearer ${PCLOUD_ACCESS_TOKEN}"
 REMOTE_BASE="/agent-brain"
 
 MODE="${1:-sync}"
@@ -27,7 +27,22 @@ log() { echo "   $1"; }
 # Ensure remote folder exists (creates recursively)
 ensure_remote_folder() {
   local remote_path="$1"
-  curl -s "${API}/createfolderifnotexists?path=${REMOTE_BASE}${remote_path}&${AUTH}" > /dev/null 2>&1 || true
+  local current_path="${REMOTE_BASE}"
+
+  # 1. Base folder
+  curl -s -H "${AUTH_HEADER}" "${API}/createfolderifnotexists?path=${current_path}" > /dev/null 2>&1 || true
+
+  # 2. Subfolders sequentially
+  if [[ -n "${remote_path}" && "${remote_path}" != "/" && "${remote_path}" != "." ]]; then
+    local clean_path="${remote_path#/}"
+    IFS='/' read -ra PARTS <<< "${clean_path}"
+    for part in "${PARTS[@]}"; do
+      if [[ -n "${part}" ]]; then
+        current_path="${current_path}/${part}"
+        curl -s -H "${AUTH_HEADER}" "${API}/createfolderifnotexists?path=${current_path}" > /dev/null 2>&1 || true
+      fi
+    done
+  fi
 }
 
 # Upload a single file to pCloud
@@ -41,7 +56,7 @@ upload_file() {
   filename=$(basename "${local_path}")
 
   curl -s -X POST "${API}/uploadfile" \
-    -F "${AUTH}" \
+    -H "${AUTH_HEADER}" \
     -F "path=${REMOTE_BASE}${remote_dir}" \
     -F "renameifexists=0" \
     -F "filename=${filename}" \
@@ -57,7 +72,7 @@ download_file() {
 
   # Get file link
   local link_response
-  link_response=$(curl -s "${API}/getfilelink?path=${REMOTE_BASE}${remote_path}&${AUTH}")
+  link_response=$(curl -s -H "${AUTH_HEADER}" "${API}/getfilelink?path=${REMOTE_BASE}${remote_path}")
 
   local result
   result=$(echo "${link_response}" | python3 -c "import sys,json; print(json.load(sys.stdin).get('result',9999))")
@@ -83,7 +98,7 @@ print('https://' + d['hosts'][0] + d['path'])
 list_remote_files() {
   local remote_path="${1:-}"
   local response
-  response=$(curl -s "${API}/listfolder?path=${REMOTE_BASE}${remote_path}&recursive=1&${AUTH}")
+  response=$(curl -s -H "${AUTH_HEADER}" "${API}/listfolder?path=${REMOTE_BASE}${remote_path}&recursive=1")
 
   echo "${response}" | python3 -c "
 import sys, json
