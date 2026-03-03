@@ -154,6 +154,23 @@ bash ~/.gemini/antigravity/skills/agent-brain/scripts/sync.sh sync
 4. **Cross-link everything**. Sessions reference `[[projects/name]]`, projects reference `[[sessions/date]]`.
 5. **No secrets in memory files**. Credentials go in `.env` only.
 
+## Workflows
+
+Agent Brain ships with two global workflows that can be installed to `~/.agent/workflows/` during bootstrap (or manually via `install-workflows.sh`):
+
+| Workflow | Slash Command | Purpose |
+|----------|---------------|---------|
+| `save-brain` | `/save-brain` | Flush session memory → update MEMORY/USER/projects → build index → push to pCloud |
+| `load-brain` | `/load-brain` | Pull latest from pCloud → load MEMORY.md, USER.md, today/yesterday sessions → load project context |
+
+### Installing Workflows
+
+Workflows are installed automatically during bootstrap. To install or reinstall manually:
+
+```bash
+bash ~/.gemini/antigravity/skills/agent-brain/scripts/install-workflows.sh
+```
+
 ## Detailed References
 
 - **Memory file format templates**: See [memory-format.md](references/memory-format.md)

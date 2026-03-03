@@ -184,6 +184,24 @@ else
   curl -s "https://${PCLOUD_API_HOST}/createfolderifnotexists?path=/agent-brain&auth=${PCLOUD_ACCESS_TOKEN}" > /dev/null 2>&1 || true
 fi
 
+# 7. Offer to install global workflows
+echo ""
+echo "📋 Agent Brain includes global workflows for your AI agent:"
+echo "   • /save-brain — Flush session memory and sync to pCloud"
+echo "   • /load-brain — Load cross-session memory into context"
+echo ""
+read -r -p "   Install workflows to ~/.agent/workflows/? [Y/n] " INSTALL_WF
+INSTALL_WF="${INSTALL_WF:-Y}"
+
+if [[ "${INSTALL_WF}" =~ ^[Yy]$ ]]; then
+  bash "${SKILL_DIR}/scripts/install-workflows.sh"
+else
+  echo ""
+  echo "   ⏭️  Skipped. You can install later with:"
+  echo "   bash ${SKILL_DIR}/scripts/install-workflows.sh"
+  echo ""
+fi
+
 echo ""
 echo "🧠 Agent Brain bootstrap complete!"
 echo "   Local:  ${BRAIN_DIR}/"

@@ -148,6 +148,23 @@ bash ~/.gemini/antigravity/skills/agent-brain/scripts/sync.sh sync
 4. **交叉連結一切**。Session 參考 `[[projects/name]]`，專案參考 `[[sessions/date]]`。
 5. **記憶檔案中不放密鑰**。認證資訊只放在 `.env` 中。
 
+## Workflows
+
+Agent Brain 附帶兩個全域 workflow，可在 bootstrap 過程中安裝至 `~/.agent/workflows/`（也可稍後手動透過 `install-workflows.sh` 安裝）：
+
+| Workflow | Slash 指令 | 用途 |
+|----------|-----------|------|
+| `save-brain` | `/save-brain` | 沖刷 session 記憶 → 更新 MEMORY/USER/projects → 建立索引 → 推送至 pCloud |
+| `load-brain` | `/load-brain` | 從 pCloud 拉取最新資料 → 載入 MEMORY.md、USER.md、今日/昨日 session → 載入專案上下文 |
+
+### 安裝 Workflows
+
+Workflows 會在 bootstrap 過程中自動安裝。如需手動安裝或重新安裝：
+
+```bash
+bash ~/.gemini/antigravity/skills/agent-brain/scripts/install-workflows.sh
+```
+
 ## 詳細參考
 
 - **記憶檔案格式範本**：參閱 [memory-format.md](references/memory-format.md)

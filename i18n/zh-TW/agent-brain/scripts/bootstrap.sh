@@ -184,6 +184,24 @@ else
   curl -s "https://${PCLOUD_API_HOST}/createfolderifnotexists?path=/agent-brain&auth=${PCLOUD_ACCESS_TOKEN}" > /dev/null 2>&1 || true
 fi
 
+# 7. Offer to install global workflows
+echo ""
+echo "📋 Agent Brain 附帶全域 workflows，可搭配 AI 代理使用："
+echo "   • /save-brain — 沖刷 session 記憶並同步至 pCloud"
+echo "   • /load-brain — 載入跨 session 記憶至當前上下文"
+echo ""
+read -r -p "   是否安裝 workflows 至 ~/.agent/workflows/？[Y/n] " INSTALL_WF
+INSTALL_WF="${INSTALL_WF:-Y}"
+
+if [[ "${INSTALL_WF}" =~ ^[Yy]$ ]]; then
+  bash "${SKILL_DIR}/scripts/install-workflows.sh"
+else
+  echo ""
+  echo "   ⏭️  已跳過。您可以稍後執行以下指令安裝："
+  echo "   bash ${SKILL_DIR}/scripts/install-workflows.sh"
+  echo ""
+fi
+
 echo ""
 echo "🧠 Agent Brain bootstrap complete!"
 echo "   Local:  ${BRAIN_DIR}/"
