@@ -14,11 +14,11 @@ This project integrates skills from multiple sources:
 |--------|--------|--------|
 | **Original** | `prd`, `sa`, `sdd`, `refactoring` | [@Tai-ch0802](https://github.com/Tai-ch0802) |
 | **[antigravity-kit](https://github.com/vudovn/antigravity-kit)** | 31 skills (see below) | [@vudovn](https://github.com/vudovn) |
-| **[gemini-skills](https://github.com/google-gemini/gemini-skills)** | `gemini-api-dev`, `gemini-live-api-dev` | [@google-gemini](https://github.com/google-gemini) |
+| **[gemini-skills](https://github.com/google-gemini/gemini-skills)** | `gemini-api-dev`, `gemini-interactions-api`, `gemini-live-api-dev` | [@google-gemini](https://github.com/google-gemini) |
 | **Composite (new)** | `testing-mastery`, `code-quality` | Merged & curated by [@Tai-ch0802](https://github.com/Tai-ch0802) |
 | **Cloud & Memory** | `pcloud`, `agent-brain` | [@Tai-ch0802](https://github.com/Tai-ch0802) |
 
-## Available Skills (42)
+## Available Skills (43)
 
 ### SDD Pack (Original)
 
@@ -78,6 +78,7 @@ This project integrates skills from multiple sources:
 | Skill | Description |
 |-------|-------------|
 | **[gemini-api-dev](./gemini-api-dev/SKILL.md)** | Gemini API development — SDK usage, multimodal, function calling, structured output |
+| **[gemini-interactions-api](./gemini-interactions-api/SKILL.md)** | Gemini Interactions API — agentic applications, server-side state, tool orchestration, deep research |
 | **[gemini-live-api-dev](./gemini-live-api-dev/SKILL.md)** | Gemini Live API development — real-time audio/video streaming, WebSockets, native audio |
 
 ### Composite Skills (Merged & Curated)
