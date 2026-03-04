@@ -160,3 +160,7 @@ public class GenerateTextFromTextInput {
 - [嵌入向量](https://ai.google.dev/gemini-api/docs/embeddings.md.txt)
 - [互動 API](https://ai.google.dev/gemini-api/docs/interactions.md.txt)
 - [SDK 遷移指南](https://ai.google.dev/gemini-api/docs/migrate.md.txt)
+
+## Gemini Live API
+
+對於具有 Gemini Live API 的即時、雙向音訊/視訊/文字串流，請安裝 **`google-gemini/gemini-live-api-dev`** 技能。它涵蓋 WebSocket 串流、語音活動偵測 (VAD)、原生音訊功能、函式呼叫、會話管理、臨時權杖等。
