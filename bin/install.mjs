@@ -3,9 +3,11 @@
 import { select, checkbox, input, confirm } from '@inquirer/prompts';
 import { homedir } from 'os';
 import chalk from 'chalk';
-import { existsSync, mkdirSync, cpSync, readdirSync } from 'fs';
+import { existsSync, mkdirSync, cpSync, readdirSync, createWriteStream, rmSync } from 'fs';
 import { join, dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
+import { execSync } from 'child_process';
+import { get } from 'https';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -59,7 +61,6 @@ const LANGUAGES = {
         'database-design': 'Database design — schema, indexing, ORM selection, serverless databases',
         'deployment-procedures': 'Production deployment workflows, rollback strategies, verification',
         'documentation-templates': 'Documentation templates — README, API docs, code comments',
-        'frontend-design': 'Design thinking for web UI — components, layouts, color, typography',
         'game-development': 'Game development orchestrator for multiple platforms',
         'gemini-api-dev': 'Gemini API development — SDK usage, multimodal, function calling, structured output',
         'gemini-interactions-api': 'Gemini Interactions API — agentic applications, server-side state, tool orchestration, deep research',
@@ -69,7 +70,6 @@ const LANGUAGES = {
         'i18n-localization': 'Internationalization — translations, locale files, RTL support',
         'intelligent-routing': 'Automatic agent selection and intelligent task routing',
         'lint-and-validate': 'Automatic quality control, linting, and static analysis',
-        'mcp-builder': 'MCP server building — tool design, resource patterns, best practices',
         'mobile-design': 'Mobile-first design for iOS/Android — touch, performance, platform conventions',
         'nextjs-react-expert': 'React/Next.js performance optimization from Vercel Engineering',
         'nodejs-best-practices': 'Node.js development — framework selection, async, security, architecture',
@@ -90,6 +90,24 @@ const LANGUAGES = {
         'web-design-guidelines': 'UI code review for Web Interface Guidelines compliance',
         pcloud: 'pCloud cloud storage API integration — file management, sharing, streaming, OAuth 2.0',
         'agent-brain': 'Persistent cross-session memory system — digital twin brain with pCloud sync',
+        // Anthropic Official Skills
+        'algorithmic-art': 'Algorithmic art with p5.js — seeded randomness, flow fields, particle systems',
+        'brand-guidelines': 'Apply Anthropic brand colors and typography to artifacts',
+        'canvas-design': 'Visual art creation in .png/.pdf — posters, designs, static graphics',
+        'claude-api': 'Build apps with Claude API / Anthropic SDK / Agent SDK',
+        'doc-coauthoring': 'Structured co-authoring workflow for docs, proposals, and specs',
+        docx: 'Create, read, edit Word documents (.docx) — formatting, tables, images, tracked changes',
+        'frontend-design': 'Production-grade frontend interfaces — creative, polished UI code',
+        'internal-comms': 'Internal communications — status reports, newsletters, incident reports',
+        'mcp-builder': 'MCP server building guide — FastMCP (Python) and MCP SDK (Node/TS)',
+        pdf: 'PDF manipulation — read, merge, split, fill forms, OCR, watermarks',
+        pptx: 'PowerPoint manipulation — create, read, edit, parse .pptx presentations',
+        'skill-creator': 'Create, improve, and evaluate AI skills with benchmarking',
+        'slack-gif-creator': 'Create animated GIFs optimized for Slack',
+        'theme-factory': 'Apply visual themes to slides, docs, reports, landing pages (10 presets)',
+        'web-artifacts-builder': 'Multi-component HTML artifacts with React, Tailwind, shadcn/ui',
+        'webapp-testing': 'Web app testing toolkit with Playwright — screenshots, logs, debugging',
+        xlsx: 'Spreadsheet manipulation — read, write, format .xlsx/.csv files',
       },
     },
   },
@@ -136,7 +154,6 @@ const LANGUAGES = {
         'database-design': '資料庫設計 — Schema、索引策略、ORM 選擇、無伺服器資料庫',
         'deployment-procedures': '生產環境部署流程、回滾策略、驗證',
         'documentation-templates': '文件範本 — README、API 文件、程式碼註解',
-        'frontend-design': 'Web UI 設計思維 — 元件、佈局、配色、排版',
         'game-development': '遊戲開發協調器，支援多平台',
         'gemini-api-dev': 'Gemini API 開發 — SDK 使用、多模態、函式呼叫、結構化輸出',
         'gemini-interactions-api': 'Gemini Interactions API — 代理應用程式、伺服器端狀態、工具協調、深度研究',
@@ -146,7 +163,6 @@ const LANGUAGES = {
         'i18n-localization': '國際化 — 翻譯管理、本地化檔案、RTL 支援',
         'intelligent-routing': '自動代理選擇與智慧任務路由',
         'lint-and-validate': '自動品質控制、程式碼檢查與靜態分析',
-        'mcp-builder': 'MCP 伺服器建構 — 工具設計、資源模式、最佳實踐',
         'mobile-design': '行動優先設計（iOS/Android）— 觸控互動、效能、平台慣例',
         'nextjs-react-expert': 'React/Next.js 效能最佳化（來自 Vercel 工程團隊）',
         'nodejs-best-practices': 'Node.js 開發 — 框架選擇、非同步模式、安全性、架構',
@@ -167,6 +183,24 @@ const LANGUAGES = {
         'web-design-guidelines': 'UI 程式碼審查，符合 Web 介面指南',
         pcloud: 'pCloud 雲端儲存 API 整合 — 檔案管理、分享、串流、OAuth 2.0',
         'agent-brain': '持久化跨 Session 記憶系統 — 數位孿生大腦，搭配 pCloud 同步',
+        // Anthropic 官方技能
+        'algorithmic-art': '使用 p5.js 的演算法藝術 — 種子隨機性、流場、粒子系統',
+        'brand-guidelines': '套用 Anthropic 品牌色彩與排版至產出物',
+        'canvas-design': '視覺藝術創作（.png/.pdf）— 海報、設計、靜態圖像',
+        'claude-api': '使用 Claude API / Anthropic SDK / Agent SDK 建構應用',
+        'doc-coauthoring': '結構化文件共同撰寫工作流程 — 提案、技術規格',
+        docx: 'Word 文件操作 — 建立、讀取、編輯 .docx，格式化、表格、追蹤修訂',
+        'frontend-design': '生產等級前端介面 — 創意且精緻的 UI 程式碼',
+        'internal-comms': '內部通訊 — 狀態報告、電子報、事件報告',
+        'mcp-builder': 'MCP 伺服器建構指南 — FastMCP (Python) 與 MCP SDK (Node/TS)',
+        pdf: 'PDF 操作 — 讀取、合併、分割、填表、OCR、浮水印',
+        pptx: 'PowerPoint 操作 — 建立、讀取、編輯、解析 .pptx 簡報',
+        'skill-creator': 'AI 技能建立、改善與評估（含效能基準測試）',
+        'slack-gif-creator': '建立針對 Slack 最佳化的動態 GIF',
+        'theme-factory': '為投影片、文件、報告、登陸頁套用視覺主題（10 種預設）',
+        'web-artifacts-builder': '多元件 HTML 產出物 — React、Tailwind、shadcn/ui',
+        'webapp-testing': 'Web 應用測試工具包 — Playwright 截圖、日誌、除錯',
+        xlsx: '試算表操作 — 讀取、寫入、格式化 .xlsx/.csv 檔案',
       },
     },
   },
@@ -179,16 +213,29 @@ const SKILLS = [
   'api-patterns', 'app-builder', 'architecture', 'bash-linux',
   'behavioral-modes', 'brainstorming', 'code-quality',
   'database-design', 'deployment-procedures', 'documentation-templates',
-  'frontend-design', 'game-development', 'gemini-api-dev', 'gemini-interactions-api', 'gemini-live-api-dev', 'geo-fundamentals', 'humanizer', 'i18n-localization',
-  'intelligent-routing', 'lint-and-validate', 'mcp-builder', 'mobile-design',
+  'game-development', 'gemini-api-dev', 'gemini-interactions-api', 'gemini-live-api-dev', 'geo-fundamentals', 'humanizer', 'i18n-localization',
+  'intelligent-routing', 'lint-and-validate', 'mobile-design',
   'nextjs-react-expert', 'nodejs-best-practices', 'parallel-agents',
   'performance-profiling', 'plan-writing', 'powershell-windows', 'python-patterns',
   'red-team-tactics', 'rust-pro', 'seo-fundamentals', 'server-management',
   'skill-vetter', 'systematic-debugging', 'tailwind-patterns', 'testing-mastery',
   'vulnerability-scanner', 'web-design-guidelines',
+  // Anthropic Official Skills (alphabetical)
+  'algorithmic-art', 'brand-guidelines', 'canvas-design', 'claude-api',
+  'doc-coauthoring', 'docx', 'frontend-design', 'internal-comms',
+  'mcp-builder', 'pdf', 'pptx', 'skill-creator', 'slack-gif-creator',
+  'theme-factory', 'web-artifacts-builder', 'webapp-testing', 'xlsx',
   // Cloud & Memory Skills
   'pcloud', 'agent-brain',
 ];
+
+// Remote skills — not stored in this repo; downloaded at install time from upstream
+const REMOTE_SKILLS = {
+  docx: { repo: 'anthropics/skills', path: 'skills/docx', branch: 'main' },
+  pdf: { repo: 'anthropics/skills', path: 'skills/pdf', branch: 'main' },
+  pptx: { repo: 'anthropics/skills', path: 'skills/pptx', branch: 'main' },
+  xlsx: { repo: 'anthropics/skills', path: 'skills/xlsx', branch: 'main' },
+};
 
 const DEPENDENCIES = {
   // --- SDD Pack ---
@@ -237,7 +284,6 @@ const DEPENDENCIES = {
   'gemini-live-api-dev': [],
   'i18n-localization': [],
   'intelligent-routing': [],
-  'mcp-builder': [],
   'nextjs-react-expert': [],
   'nodejs-best-practices': [],
   'parallel-agents': [],
@@ -249,6 +295,24 @@ const DEPENDENCIES = {
   'server-management': [],
   'skill-vetter': [],
   'systematic-debugging': [],
+
+  // --- Anthropic Official Skills ---
+  'algorithmic-art': [],
+  'brand-guidelines': [],
+  'canvas-design': [],
+  'claude-api': [],
+  'doc-coauthoring': [],
+  docx: [],
+  'internal-comms': [],
+  'mcp-builder': [],
+  pdf: [],
+  pptx: [],
+  'skill-creator': [],
+  'slack-gif-creator': [],
+  'theme-factory': [],
+  'web-artifacts-builder': [],
+  'webapp-testing': [],
+  xlsx: [],
 
   // --- Cloud & Memory ---
   pcloud: [],
@@ -343,11 +407,59 @@ function getSkillSourcePath(skill, langPath) {
   return join(PACKAGE_ROOT, skill);
 }
 
+/**
+ * Download a remote skill from GitHub using tarball API + tar extraction.
+ * @returns {boolean} true if download succeeded
+ */
+function downloadRemoteSkill(skill, destBase) {
+  const config = REMOTE_SKILLS[skill];
+  if (!config) return false;
+
+  const destPath = join(destBase, skill);
+  const tarballUrl = `https://github.com/${config.repo}/archive/refs/heads/${config.branch}.tar.gz`;
+  const tmpTar = join(destBase, `.tmp-${skill}.tar.gz`);
+
+  try {
+    console.log(chalk.dim(`   ⏬ Downloading ${skill} from ${config.repo}...`));
+
+    // Download tarball using curl (available on all platforms)
+    execSync(`curl -sL "${tarballUrl}" -o "${tmpTar}"`, { stdio: 'pipe' });
+
+    // Extract only the target skill directory
+    mkdirSync(destPath, { recursive: true });
+    // The tarball contains a root dir like "skills-main/", so we strip 2 components
+    // and match only the target path
+    const stripComponents = config.path.split('/').length + 1; // +1 for the archive root dir
+    execSync(
+      `tar -xzf "${tmpTar}" -C "${destPath}" --strip-components=${stripComponents} "*/${config.path}/"`,
+      { stdio: 'pipe' }
+    );
+
+    return true;
+  } catch (err) {
+    console.error(chalk.red(`   ❌ Failed to download ${skill}: ${err.message}`));
+    return false;
+  } finally {
+    // Clean up temp tarball
+    try { rmSync(tmpTar, { force: true }); } catch { /* ignore */ }
+  }
+}
+
 function copySkill(skill, langPath, destBase) {
+  // Check if this is a remote skill (and not a zh-TW translation request)
+  if (REMOTE_SKILLS[skill] && !langPath) {
+    return downloadRemoteSkill(skill, destBase);
+  }
+
   const srcPath = getSkillSourcePath(skill, langPath);
   const destPath = join(destBase, skill);
 
   if (!existsSync(srcPath)) {
+    // For remote skills with langPath, the zh-TW translation may not exist
+    if (REMOTE_SKILLS[skill]) {
+      console.log(chalk.dim(`   ℹ️  No ${langPath} translation for ${skill}, using English`));
+      return downloadRemoteSkill(skill, destBase);
+    }
     console.error(chalk.red(`Source not found: ${srcPath}`));
     return false;
   }

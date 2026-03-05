@@ -13,13 +13,14 @@ This project integrates skills from multiple sources:
 | Source | Skills | Author |
 |--------|--------|--------|
 | **Original** | `prd`, `sa`, `sdd`, `refactoring` | [@Tai-ch0802](https://github.com/Tai-ch0802) |
-| **[antigravity-kit](https://github.com/vudovn/antigravity-kit)** | 31 skills (see below) | [@vudovn](https://github.com/vudovn) |
+| **[antigravity-kit](https://github.com/vudovn/antigravity-kit)** | 28 skills (see below) | [@vudovn](https://github.com/vudovn) |
+| **[skills](https://github.com/anthropics/skills)** | 17 skills (see below) | [@anthropics](https://github.com/anthropics) |
 | **[gemini-skills](https://github.com/google-gemini/gemini-skills)** | `gemini-api-dev`, `gemini-interactions-api`, `gemini-live-api-dev` | [@google-gemini](https://github.com/google-gemini) |
 | **[humanizer](https://clawhub.ai/biostartechnology/humanizer)**, **[skill-vetter](https://clawhub.ai/spclaudehome/skill-vetter)** | `humanizer`, `skill-vetter` | ClawHub authors |
 | **Composite (new)** | `testing-mastery`, `code-quality` | Merged & curated by [@Tai-ch0802](https://github.com/Tai-ch0802) |
 | **Cloud & Memory** | `pcloud`, `agent-brain` | [@Tai-ch0802](https://github.com/Tai-ch0802) |
 
-## Available Skills (45)
+## Available Skills (62)
 
 ### SDD Pack (Original)
 
@@ -35,7 +36,7 @@ This project integrates skills from multiple sources:
 ### Antigravity Kit Skills (from [vudovn/antigravity-kit](https://github.com/vudovn/antigravity-kit))
 
 <details>
-<summary>Click to expand all 31 skills</summary>
+<summary>Click to expand all 28 skills</summary>
 
 | Skill | Description |
 |-------|-------------|
@@ -48,13 +49,11 @@ This project integrates skills from multiple sources:
 | **[database-design](./database-design/SKILL.md)** | Schema, indexing, ORM selection |
 | **[deployment-procedures](./deployment-procedures/SKILL.md)** | Production deployment workflows |
 | **[documentation-templates](./documentation-templates/SKILL.md)** | README, API docs, code comments |
-| **[frontend-design](./frontend-design/SKILL.md)** | Web UI design thinking |
 | **[game-development](./game-development/SKILL.md)** | Game development orchestrator |
 | **[geo-fundamentals](./geo-fundamentals/SKILL.md)** | Generative Engine Optimization |
 | **[i18n-localization](./i18n-localization/SKILL.md)** | Internationalization & localization |
 | **[intelligent-routing](./intelligent-routing/SKILL.md)** | Automatic agent selection |
 | **[lint-and-validate](./lint-and-validate/SKILL.md)** | Linting & static analysis |
-| **[mcp-builder](./mcp-builder/SKILL.md)** | MCP server building |
 | **[mobile-design](./mobile-design/SKILL.md)** | Mobile-first design (iOS/Android) |
 | **[nextjs-react-expert](./nextjs-react-expert/SKILL.md)** | React/Next.js performance optimization |
 | **[nodejs-best-practices](./nodejs-best-practices/SKILL.md)** | Node.js development patterns |
@@ -68,9 +67,37 @@ This project integrates skills from multiple sources:
 | **[seo-fundamentals](./seo-fundamentals/SKILL.md)** | SEO fundamentals |
 | **[server-management](./server-management/SKILL.md)** | Server management & scaling |
 | **[systematic-debugging](./systematic-debugging/SKILL.md)** | 4-phase systematic debugging |
-| **[tailwind-patterns](./tailwind-patterns/SKILL.md)** | Tailwind CSS v4 patterns |
 | **[vulnerability-scanner](./vulnerability-scanner/SKILL.md)** | Vulnerability analysis (OWASP 2025) |
 | **[web-design-guidelines](./web-design-guidelines/SKILL.md)** | UI code review for Web compliance |
+
+</details>
+
+### Anthropic Official Skills (from [anthropics/skills](https://github.com/anthropics/skills))
+
+<details>
+<summary>Click to expand all 17 skills</summary>
+
+| Skill | Description | License |
+|-------|-------------|---------|
+| **[algorithmic-art](./algorithmic-art/SKILL.md)** | Algorithmic art with p5.js — seeded randomness, flow fields | Apache 2.0 |
+| **[brand-guidelines](./brand-guidelines/SKILL.md)** | Apply Anthropic brand colors and typography to artifacts | Apache 2.0 |
+| **[canvas-design](./canvas-design/SKILL.md)** | Visual art creation in .png/.pdf — posters, designs | Apache 2.0 |
+| **[claude-api](./claude-api/SKILL.md)** | Build apps with Claude API / Anthropic SDK / Agent SDK | Apache 2.0 |
+| **[doc-coauthoring](./doc-coauthoring/SKILL.md)** | Structured co-authoring workflow for docs and specs | Apache 2.0 |
+| **docx** ⚡ | Create, read, edit Word documents (.docx) | Anthropic proprietary |
+| **[frontend-design](./frontend-design/SKILL.md)** | Production-grade frontend interfaces — creative, polished UI | Apache 2.0 |
+| **[internal-comms](./internal-comms/SKILL.md)** | Internal communications — status reports, newsletters | Apache 2.0 |
+| **[mcp-builder](./mcp-builder/SKILL.md)** | MCP server building — FastMCP (Python) and MCP SDK (Node/TS) | Apache 2.0 |
+| **pdf** ⚡ | PDF manipulation — read, merge, split, fill forms, OCR | Anthropic proprietary |
+| **pptx** ⚡ | PowerPoint manipulation — create, read, edit presentations | Anthropic proprietary |
+| **[skill-creator](./skill-creator/SKILL.md)** | Create, improve, and evaluate AI skills with benchmarking | Apache 2.0 |
+| **[slack-gif-creator](./slack-gif-creator/SKILL.md)** | Create animated GIFs optimized for Slack | Apache 2.0 |
+| **[theme-factory](./theme-factory/SKILL.md)** | Apply visual themes to slides, docs, reports (10 presets) | Apache 2.0 |
+| **[web-artifacts-builder](./web-artifacts-builder/SKILL.md)** | Multi-component HTML artifacts with React, Tailwind, shadcn/ui | Apache 2.0 |
+| **[webapp-testing](./webapp-testing/SKILL.md)** | Web app testing toolkit with Playwright | Apache 2.0 |
+| **xlsx** ⚡ | Spreadsheet manipulation — read, write, format .xlsx/.csv | Anthropic proprietary |
+
+> ⚡ **Remote skills**: `docx`, `pdf`, `pptx`, `xlsx` are downloaded at install time from the official [anthropics/skills](https://github.com/anthropics/skills) repo due to their proprietary license. They are not stored in this repository.
 
 </details>
 
@@ -141,6 +168,8 @@ The installer guides you through:
 4. 📂 **Scope** — Project directory or global (`~/.gemini/antigravity/skills/`)
 5. 📁 **Path** — Preset paths for popular AI agents or custom path
 
+> **Note**: Remote skills (docx, pdf, pptx, xlsx) require internet access and are downloaded from GitHub at install time.
+
 ### Manual Installation
 
 ```bash
@@ -168,24 +197,34 @@ cp -r i18n/zh-TW/* /your-project/.agent/skills/
 
 ```
 skills-bundle/
-├── prd/                 # SDD: Product Requirements (original)
-├── sa/                  # SDD: System Analysis (original)
-├── sdd/                 # SDD: Orchestration (original)
-├── refactoring/         # Refactoring skill (original)
-├── testing-mastery/     # Composite: unified testing
-├── code-quality/        # Composite: standards + review
-├── pcloud/              # pCloud cloud storage API skill
-├── agent-brain/         # Persistent cross-session memory
-├── api-patterns/        # ┐
-├── architecture/        # │
-├── frontend-design/     # │ Antigravity Kit skills
-├── mobile-design/       # │ (from vudovn/antigravity-kit)
-├── ...                  # │
-├── vulnerability-scanner/ # ┘
+├── prd/                   # SDD: Product Requirements (original)
+├── sa/                    # SDD: System Analysis (original)
+├── sdd/                   # SDD: Orchestration (original)
+├── refactoring/           # Refactoring skill (original)
+├── testing-mastery/       # Composite: unified testing
+├── code-quality/          # Composite: standards + review
+├── pcloud/                # pCloud cloud storage API skill
+├── agent-brain/           # Persistent cross-session memory
+├── gemini-api-dev/        # ┐ Gemini API skills
+├── gemini-interactions-api/ # │ (from google-gemini)
+├── gemini-live-api-dev/   # ┘
+├── algorithmic-art/       # ┐
+├── brand-guidelines/      # │
+├── canvas-design/         # │ Anthropic Official skills
+├── claude-api/            # │ (from anthropics/skills)
+├── frontend-design/       # │
+├── mcp-builder/           # │
+├── webapp-testing/        # │
+├── ...                    # ┘
+├── api-patterns/          # ┐
+├── architecture/          # │ Antigravity Kit skills
+├── mobile-design/         # │ (from vudovn/antigravity-kit)
+├── ...                    # ┘
 ├── i18n/
-│   └── zh-TW/           # Traditional Chinese translations
+│   └── zh-TW/             # Traditional Chinese translations
 ├── bin/
-│   └── install.mjs      # Interactive CLI installer
+│   └── install.mjs        # Interactive CLI installer
+├── .github/workflows/     # Upstream sync GitHub Actions
 └── package.json
 ```
 
@@ -193,10 +232,15 @@ skills-bundle/
 
 [MIT](./LICENSE)
 
+> **Note**: Skills from [anthropics/skills](https://github.com/anthropics/skills) carry their own licenses:
+> - Most Anthropic skills: Apache 2.0
+> - Document skills (`docx`, `pdf`, `pptx`, `xlsx`): Anthropic proprietary (source-available, not redistributed — downloaded at install time)
+
 ## Credits
 
 - **SDD Pack & Refactoring** — Original work by [@Tai-ch0802](https://github.com/Tai-ch0802)
 - **Antigravity Kit Skills** — From [vudovn/antigravity-kit](https://github.com/vudovn/antigravity-kit) by [@vudovn](https://github.com/vudovn)
+- **Anthropic Official Skills** — From [anthropics/skills](https://github.com/anthropics/skills) by [@anthropics](https://github.com/anthropics)
 - **Gemini API Skills** — From [google-gemini/gemini-skills](https://github.com/google-gemini/gemini-skills) by [@google-gemini](https://github.com/google-gemini)
 - **Humanizer Skill** — From [biostartechnology/humanizer](https://clawhub.ai/biostartechnology/humanizer) on ClawHub
 - **Skill Vetter** — From [spclaudehome/skill-vetter](https://clawhub.ai/spclaudehome/skill-vetter) on ClawHub

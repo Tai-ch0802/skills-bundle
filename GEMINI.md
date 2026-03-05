@@ -2,20 +2,23 @@
 
 ## Overview
 
-This repository is a **curated collection of 45 AI agent skills** for coding assistants, bundled from multiple sources with an interactive installer and Traditional Chinese translations.
+This repository is a **curated collection of 62 AI agent skills** for coding assistants, bundled from multiple sources with an interactive installer and Traditional Chinese translations.
 
 ## Skill Categories
 
 | Category | Count | Examples |
 |----------|-------|---------|
 | **SDD Pack** (original) | 4 | `prd`, `sa`, `sdd`, `refactoring` |
-| **Antigravity Kit** (from vudovn) | 31 | `api-patterns`, `architecture`, `frontend-design`, `database-design`, … |
+| **Antigravity Kit** (from vudovn) | 28 | `api-patterns`, `architecture`, `database-design`, … |
+| **Anthropic Official** (from anthropics) | 17 | `claude-api`, `frontend-design`, `mcp-builder`, `docx`, `pdf`, `pptx`, `xlsx`, … |
 | **Gemini API** (from google-gemini) | 3 | `gemini-api-dev`, `gemini-interactions-api`, `gemini-live-api-dev` |
 | **ClawHub** (from biostartechnology, spclaudehome) | 2 | `humanizer`, `skill-vetter` |
 | **Composite** (merged & curated) | 2 | `testing-mastery`, `code-quality` |
 | **Cloud & Memory** (original) | 3 | `pcloud`, `agent-brain` |
 
 > **Core Principle (SDD)**: "No Spec, No Code" — Every feature requires complete documentation before implementation.
+
+> **Remote Skills**: `docx`, `pdf`, `pptx`, `xlsx` are not stored locally — they are downloaded at install time from [anthropics/skills](https://github.com/anthropics/skills) due to proprietary licensing.
 
 ## For AI Agents
 
@@ -60,9 +63,15 @@ skills-bundle/
 ├── gemini-interactions-api/ # Gemini Interactions API development
 ├── gemini-live-api-dev/   # Gemini Live API development
 ├── humanizer/             # ClawHub: Remove AI writing patterns
+├── algorithmic-art/       # ┐
+├── canvas-design/         # │ Anthropic Official skills
+├── claude-api/            # │ (17 skills from anthropics/skills)
+├── frontend-design/       # │ includes doc creation skills
+├── mcp-builder/           # │ (docx/pdf/pptx/xlsx remote)
+├── webapp-testing/        # ┘
 ├── api-patterns/          # ┐
 ├── architecture/          # │ Antigravity Kit skills
-├── frontend-design/       # │ (31 skills from vudovn)
+├── mobile-design/         # │ (28 skills from vudovn)
 ├── ...                    # ┘
 ├── i18n/
 │   └── zh-TW/             # Traditional Chinese translations
