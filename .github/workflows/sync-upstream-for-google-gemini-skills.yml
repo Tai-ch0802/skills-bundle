@@ -134,7 +134,7 @@ jobs:
             both upstream and locally. The upstream skills are under `skills/` subdirectory.
 
             **Skills that came from upstream (gemini-skills):**
-            gemini-api-dev
+            gemini-api-dev, gemini-interactions-api, gemini-live-api-dev
 
             **Skills NOT from upstream (do NOT modify):**
             prd, sa, sdd, refactoring, testing-mastery, code-quality,
