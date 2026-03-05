@@ -33,81 +33,79 @@ This project integrates skills from multiple sources:
 
 > **Core Principle**: "No Spec, No Code" — Every feature requires complete documentation before implementation.
 
-### Antigravity Kit Skills (from [vudovn/antigravity-kit](https://github.com/vudovn/antigravity-kit))
+### Antigravity Kit Skills ⚡ (from [vudovn/antigravity-kit](https://github.com/vudovn/antigravity-kit))
 
 <details>
-<summary>Click to expand all 28 skills</summary>
+<summary>Click to expand all 28 skills (remote-downloaded at install time)</summary>
 
 | Skill | Description |
 |-------|-------------|
-| **[api-patterns](./api-patterns/SKILL.md)** | API design — REST vs GraphQL vs tRPC, versioning |
-| **[app-builder](./app-builder/SKILL.md)** | Full-stack app building orchestrator |
-| **[architecture](./architecture/SKILL.md)** | Architectural decision-making with ADR |
-| **[bash-linux](./bash-linux/SKILL.md)** | Bash/Linux terminal patterns |
-| **[behavioral-modes](./behavioral-modes/SKILL.md)** | AI operational modes (brainstorm, debug, review...) |
-| **[brainstorming](./brainstorming/SKILL.md)** | Socratic questioning protocol |
-| **[database-design](./database-design/SKILL.md)** | Schema, indexing, ORM selection |
-| **[deployment-procedures](./deployment-procedures/SKILL.md)** | Production deployment workflows |
-| **[documentation-templates](./documentation-templates/SKILL.md)** | README, API docs, code comments |
-| **[game-development](./game-development/SKILL.md)** | Game development orchestrator |
-| **[geo-fundamentals](./geo-fundamentals/SKILL.md)** | Generative Engine Optimization |
-| **[i18n-localization](./i18n-localization/SKILL.md)** | Internationalization & localization |
-| **[intelligent-routing](./intelligent-routing/SKILL.md)** | Automatic agent selection |
-| **[lint-and-validate](./lint-and-validate/SKILL.md)** | Linting & static analysis |
-| **[mobile-design](./mobile-design/SKILL.md)** | Mobile-first design (iOS/Android) |
-| **[nextjs-react-expert](./nextjs-react-expert/SKILL.md)** | React/Next.js performance optimization |
-| **[nodejs-best-practices](./nodejs-best-practices/SKILL.md)** | Node.js development patterns |
-| **[parallel-agents](./parallel-agents/SKILL.md)** | Multi-agent orchestration |
-| **[performance-profiling](./performance-profiling/SKILL.md)** | Performance measurement & analysis |
-| **[plan-writing](./plan-writing/SKILL.md)** | Structured task planning |
-| **[powershell-windows](./powershell-windows/SKILL.md)** | PowerShell Windows patterns |
-| **[python-patterns](./python-patterns/SKILL.md)** | Python development patterns |
-| **[red-team-tactics](./red-team-tactics/SKILL.md)** | Red team tactics (MITRE ATT&CK) |
-| **[rust-pro](./rust-pro/SKILL.md)** | Rust 1.75+ modern patterns |
-| **[seo-fundamentals](./seo-fundamentals/SKILL.md)** | SEO fundamentals |
-| **[server-management](./server-management/SKILL.md)** | Server management & scaling |
-| **[systematic-debugging](./systematic-debugging/SKILL.md)** | 4-phase systematic debugging |
-| **[vulnerability-scanner](./vulnerability-scanner/SKILL.md)** | Vulnerability analysis (OWASP 2025) |
-| **[web-design-guidelines](./web-design-guidelines/SKILL.md)** | UI code review for Web compliance |
+| **api-patterns** | API design — REST vs GraphQL vs tRPC, versioning |
+| **app-builder** | Full-stack app building orchestrator |
+| **architecture** | Architectural decision-making with ADR |
+| **bash-linux** | Bash/Linux terminal patterns |
+| **behavioral-modes** | AI operational modes (brainstorm, debug, review...) |
+| **brainstorming** | Socratic questioning protocol |
+| **database-design** | Schema, indexing, ORM selection |
+| **deployment-procedures** | Production deployment workflows |
+| **documentation-templates** | README, API docs, code comments |
+| **game-development** | Game development orchestrator |
+| **geo-fundamentals** | Generative Engine Optimization |
+| **i18n-localization** | Internationalization & localization |
+| **intelligent-routing** | Automatic agent selection |
+| **lint-and-validate** | Linting & static analysis |
+| **mobile-design** | Mobile-first design (iOS/Android) |
+| **nextjs-react-expert** | React/Next.js performance optimization |
+| **nodejs-best-practices** | Node.js development patterns |
+| **parallel-agents** | Multi-agent orchestration |
+| **performance-profiling** | Performance measurement & analysis |
+| **plan-writing** | Structured task planning |
+| **powershell-windows** | PowerShell Windows patterns |
+| **python-patterns** | Python development patterns |
+| **red-team-tactics** | Red team tactics (MITRE ATT&CK) |
+| **rust-pro** | Rust 1.75+ modern patterns |
+| **seo-fundamentals** | SEO fundamentals |
+| **server-management** | Server management & scaling |
+| **systematic-debugging** | 4-phase systematic debugging |
+| **vulnerability-scanner** | Vulnerability analysis (OWASP 2025) |
+| **web-design-guidelines** | UI code review for Web compliance |
 
 </details>
 
-### Anthropic Official Skills (from [anthropics/skills](https://github.com/anthropics/skills))
+### Anthropic Official Skills ⚡ (from [anthropics/skills](https://github.com/anthropics/skills))
 
 <details>
-<summary>Click to expand all 17 skills</summary>
+<summary>Click to expand all 17 skills (remote-downloaded at install time)</summary>
 
 | Skill | Description | License |
 |-------|-------------|---------|
-| **[algorithmic-art](./algorithmic-art/SKILL.md)** | Algorithmic art with p5.js — seeded randomness, flow fields | Apache 2.0 |
-| **[brand-guidelines](./brand-guidelines/SKILL.md)** | Apply Anthropic brand colors and typography to artifacts | Apache 2.0 |
-| **[canvas-design](./canvas-design/SKILL.md)** | Visual art creation in .png/.pdf — posters, designs | Apache 2.0 |
-| **[claude-api](./claude-api/SKILL.md)** | Build apps with Claude API / Anthropic SDK / Agent SDK | Apache 2.0 |
-| **[doc-coauthoring](./doc-coauthoring/SKILL.md)** | Structured co-authoring workflow for docs and specs | Apache 2.0 |
-| **docx** ⚡ | Create, read, edit Word documents (.docx) | Anthropic proprietary |
-| **[frontend-design](./frontend-design/SKILL.md)** | Production-grade frontend interfaces — creative, polished UI | Apache 2.0 |
-| **[internal-comms](./internal-comms/SKILL.md)** | Internal communications — status reports, newsletters | Apache 2.0 |
-| **[mcp-builder](./mcp-builder/SKILL.md)** | MCP server building — FastMCP (Python) and MCP SDK (Node/TS) | Apache 2.0 |
-| **pdf** ⚡ | PDF manipulation — read, merge, split, fill forms, OCR | Anthropic proprietary |
-| **pptx** ⚡ | PowerPoint manipulation — create, read, edit presentations | Anthropic proprietary |
-| **[skill-creator](./skill-creator/SKILL.md)** | Create, improve, and evaluate AI skills with benchmarking | Apache 2.0 |
-| **[slack-gif-creator](./slack-gif-creator/SKILL.md)** | Create animated GIFs optimized for Slack | Apache 2.0 |
-| **[theme-factory](./theme-factory/SKILL.md)** | Apply visual themes to slides, docs, reports (10 presets) | Apache 2.0 |
-| **[web-artifacts-builder](./web-artifacts-builder/SKILL.md)** | Multi-component HTML artifacts with React, Tailwind, shadcn/ui | Apache 2.0 |
-| **[webapp-testing](./webapp-testing/SKILL.md)** | Web app testing toolkit with Playwright | Apache 2.0 |
-| **xlsx** ⚡ | Spreadsheet manipulation — read, write, format .xlsx/.csv | Anthropic proprietary |
-
-> ⚡ **Remote skills**: `docx`, `pdf`, `pptx`, `xlsx` are downloaded at install time from the official [anthropics/skills](https://github.com/anthropics/skills) repo due to their proprietary license. They are not stored in this repository.
+| **algorithmic-art** | Algorithmic art with p5.js — seeded randomness, flow fields | Apache 2.0 |
+| **brand-guidelines** | Apply Anthropic brand colors and typography to artifacts | Apache 2.0 |
+| **canvas-design** | Visual art creation in .png/.pdf — posters, designs | Apache 2.0 |
+| **claude-api** | Build apps with Claude API / Anthropic SDK / Agent SDK | Apache 2.0 |
+| **doc-coauthoring** | Structured co-authoring workflow for docs and specs | Apache 2.0 |
+| **docx** | Create, read, edit Word documents (.docx) | Anthropic proprietary |
+| **frontend-design** | Production-grade frontend interfaces — creative, polished UI | Apache 2.0 |
+| **internal-comms** | Internal communications — status reports, newsletters | Apache 2.0 |
+| **mcp-builder** | MCP server building — FastMCP (Python) and MCP SDK (Node/TS) | Apache 2.0 |
+| **pdf** | PDF manipulation — read, merge, split, fill forms, OCR | Anthropic proprietary |
+| **pptx** | PowerPoint manipulation — create, read, edit presentations | Anthropic proprietary |
+| **skill-creator** | Create, improve, and evaluate AI skills with benchmarking | Apache 2.0 |
+| **slack-gif-creator** | Create animated GIFs optimized for Slack | Apache 2.0 |
+| **theme-factory** | Apply visual themes to slides, docs, reports (10 presets) | Apache 2.0 |
+| **web-artifacts-builder** | Multi-component HTML artifacts with React, Tailwind, shadcn/ui | Apache 2.0 |
+| **webapp-testing** | Web app testing toolkit with Playwright | Apache 2.0 |
+| **xlsx** | Spreadsheet manipulation — read, write, format .xlsx/.csv | Anthropic proprietary |
 
 </details>
 
-### Gemini API Skills (from [google-gemini/gemini-skills](https://github.com/google-gemini/gemini-skills))
+### Gemini API Skills ⚡ (from [google-gemini/gemini-skills](https://github.com/google-gemini/gemini-skills))
 
 | Skill | Description |
 |-------|-------------|
-| **[gemini-api-dev](./gemini-api-dev/SKILL.md)** | Gemini API development — SDK usage, multimodal, function calling, structured output |
-| **[gemini-interactions-api](./gemini-interactions-api/SKILL.md)** | Gemini Interactions API — agentic applications, server-side state, tool orchestration, deep research |
-| **[gemini-live-api-dev](./gemini-live-api-dev/SKILL.md)** | Gemini Live API development — real-time audio/video streaming, WebSockets, native audio |
+| **gemini-api-dev** | Gemini API development — SDK usage, multimodal, function calling, structured output |
+| **gemini-interactions-api** | Gemini Interactions API — agentic applications, server-side state, tool orchestration, deep research |
+| **gemini-live-api-dev** | Gemini Live API development — real-time audio/video streaming, WebSockets, native audio |
 
 ### ClawHub Skills (from [biostartechnology/humanizer](https://clawhub.ai/biostartechnology/humanizer))
 
@@ -153,6 +151,8 @@ graph TD
     PC[pcloud] --> BRAIN[agent-brain]
 ```
 
+> ⚡ **Remote Download Architecture**: Skills marked with ⚡ are **not stored locally** in this repo. They are downloaded from their upstream GitHub repos at install time using the interactive installer. Only original skills, composite skills, ClawHub skills, and zh-TW translations are stored in this repo.
+
 ## Installation
 
 ### Interactive Installer (Recommended)
@@ -168,17 +168,19 @@ The installer guides you through:
 4. 📂 **Scope** — Project directory or global (`~/.gemini/antigravity/skills/`)
 5. 📁 **Path** — Preset paths for popular AI agents or custom path
 
-> **Note**: Remote skills (docx, pdf, pptx, xlsx) require internet access and are downloaded from GitHub at install time.
+> **Note**: Most skills (⚡) require internet access and are downloaded from GitHub at install time.
 
 ### Manual Installation
 
 ```bash
-# Antigravity / Gemini CLI
-cp -r prd sa sdd /your-project/.agent/skills/
+# Only locally-stored skills can be copied manually:
+cp -r prd sa sdd refactoring /your-project/.agent/skills/
 
 # Traditional Chinese version
 cp -r i18n/zh-TW/* /your-project/.agent/skills/
 ```
+
+> For remote skills, use the interactive installer — it handles downloading automatically.
 
 ## Internationalization (i18n)
 
@@ -203,30 +205,19 @@ skills-bundle/
 ├── refactoring/           # Refactoring skill (original)
 ├── testing-mastery/       # Composite: unified testing
 ├── code-quality/          # Composite: standards + review
+├── humanizer/             # ClawHub: Remove AI writing patterns
+├── skill-vetter/          # ClawHub: Security-first skill vetting
 ├── pcloud/                # pCloud cloud storage API skill
 ├── agent-brain/           # Persistent cross-session memory
-├── gemini-api-dev/        # ┐ Gemini API skills
-├── gemini-interactions-api/ # │ (from google-gemini)
-├── gemini-live-api-dev/   # ┘
-├── algorithmic-art/       # ┐
-├── brand-guidelines/      # │
-├── canvas-design/         # │ Anthropic Official skills
-├── claude-api/            # │ (from anthropics/skills)
-├── frontend-design/       # │
-├── mcp-builder/           # │
-├── webapp-testing/        # │
-├── ...                    # ┘
-├── api-patterns/          # ┐
-├── architecture/          # │ Antigravity Kit skills
-├── mobile-design/         # │ (from vudovn/antigravity-kit)
-├── ...                    # ┘
 ├── i18n/
-│   └── zh-TW/             # Traditional Chinese translations
+│   └── zh-TW/             # Traditional Chinese translations (all 62 skills)
 ├── bin/
-│   └── install.mjs        # Interactive CLI installer
-├── .github/workflows/     # Upstream sync GitHub Actions
+│   └── install.mjs        # Interactive installer (downloads ⚡ skills at runtime)
+├── .github/workflows/     # Upstream sync GitHub Actions (metadata & i18n only)
 └── package.json
 ```
+
+> **Note**: 48 skills from upstream repos (Antigravity Kit, Anthropic, Gemini) are **not stored locally**. They are downloaded from GitHub at install time via the `REMOTE_SKILLS` config in `bin/install.mjs`.
 
 ## License
 

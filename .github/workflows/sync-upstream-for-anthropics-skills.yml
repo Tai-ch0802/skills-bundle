@@ -109,11 +109,21 @@ jobs:
         with:
           jules_api_key: ${{ secrets.JULES_API_KEY }}
           prompt: |
-            # Task: Sync Upstream Skill Changes from anthropics/skills
+            # Task: Sync Upstream Skill Changes (Metadata & Translations Only)
 
             You are a skill synchronization agent for the `skills-bundle` project.
             The upstream repository `https://github.com/anthropics/skills` has had
-            changes in the past 24 hours. Your job is to sync those changes into this project.
+            changes in the past 24 hours. Your job is to sync metadata and translations.
+
+            ## ⚠️ IMPORTANT: Remote Download Architecture
+
+            This project uses a **runtime download architecture**. ALL skills from
+            upstream repos are downloaded at install time via `REMOTE_SKILLS` in
+            `bin/install.mjs`. Therefore:
+
+            - Do **NOT** create or modify any root-level skill directories
+            - Do **NOT** copy upstream skill files into the repo
+            - Only update **installer metadata** and **zh-TW translations**
 
             ## Upstream Changes Detected
 
@@ -122,66 +132,41 @@ jobs:
             ## Important: Upstream Directory Structure
 
             The upstream repo nests skills under `skills/<skill-name>/`, NOT at root level.
-            When syncing, you must map:
-            - Upstream: `skills/<skill-name>/` → Local: `<skill-name>/`
 
-            ## Important: Remote vs Local Skills
+            ## Skills from this upstream (anthropics/skills)
 
-            Some skills are LOCAL (stored in this repo) and some are REMOTE (downloaded at
-            install time). For REMOTE skills, only update the installer metadata, NOT the files.
-
-            **LOCAL skills from this upstream (sync files):**
+            All are REMOTE (downloaded at runtime):
             algorithmic-art, brand-guidelines, canvas-design, claude-api,
-            doc-coauthoring, frontend-design, internal-comms, mcp-builder,
-            skill-creator, slack-gif-creator, theme-factory, web-artifacts-builder,
-            webapp-testing
+            doc-coauthoring, docx, frontend-design, internal-comms, mcp-builder,
+            pdf, pptx, skill-creator, slack-gif-creator, theme-factory,
+            web-artifacts-builder, webapp-testing, xlsx
 
-            **REMOTE skills from this upstream (update installer metadata only):**
-            docx, pdf, pptx, xlsx
-            These are downloaded at runtime via `REMOTE_SKILLS` in `bin/install.mjs`.
-            Do NOT create local directories for these. Only update descriptions in
-            `bin/install.mjs` if the upstream SKILL.md description changed.
-
-            **Skills NOT from this upstream (do NOT modify):**
-            prd, sa, sdd, refactoring, testing-mastery, code-quality,
-            api-patterns, app-builder, architecture, bash-linux, behavioral-modes,
-            brainstorming, database-design, deployment-procedures, documentation-templates,
-            game-development, geo-fundamentals, i18n-localization, intelligent-routing,
-            lint-and-validate, mobile-design, nextjs-react-expert,
-            nodejs-best-practices, parallel-agents, performance-profiling, plan-writing,
-            powershell-windows, python-patterns, red-team-tactics, rust-pro,
-            seo-fundamentals, server-management, systematic-debugging, tailwind-patterns,
-            vulnerability-scanner, web-design-guidelines,
-            gemini-api-dev, gemini-interactions-api, gemini-live-api-dev,
-            humanizer, skill-vetter,
-            pcloud, agent-brain
+            ## Instructions
 
             ### Step 1: Identify what changed upstream
 
-            Clone or fetch `https://github.com/anthropics/skills` and compare with
-            the skill directories in THIS repo. Focus only on LOCAL skill directories
-            that exist both upstream and locally.
+            Clone or fetch `https://github.com/anthropics/skills` and review the
+            changes. Focus on SKILL.md files under `skills/` directories.
 
-            ### Step 2: Sync changed skills
+            ### Step 2: Update installer metadata (if needed)
 
-            For each LOCAL skill that has changes upstream:
-            1. Copy the updated files from upstream `skills/<skill-name>/` to the
-               corresponding local directory `<skill-name>/`
-            2. If upstream added a NEW skill directory under `skills/` that doesn't exist
-               locally, create it at the repo root and add it to `bin/install.mjs`:
-               - Add to the `SKILLS` array (in the Anthropic Official Skills section)
-               - Add to `DEPENDENCIES` (empty array if no dependencies)
-               - Add English description in `LANGUAGES.en.messages.skillDescriptions`
-               - Add Traditional Chinese (zh-TW) description in `LANGUAGES['zh-TW'].messages.skillDescriptions`
-               - Add to `package.json` `files` array (alphabetical order)
-               - If the new skill has a proprietary license (non-Apache-2.0), add it to
-                 `REMOTE_SKILLS` instead and do NOT store files locally
-            3. If upstream deleted a skill, remove it from the local repo, `bin/install.mjs`,
-               and `package.json`
+            If any skill's SKILL.md description or name changed, update the corresponding
+            entries in `bin/install.mjs`:
+            - `LANGUAGES.en.messages.skillDescriptions` (English description)
+            - `LANGUAGES['zh-TW'].messages.skillDescriptions` (Traditional Chinese description)
+
+            If upstream added a NEW skill directory under `skills/`:
+            1. Add it to the `SKILLS` array (in the Anthropic Official Skills section)
+            2. Add to `DEPENDENCIES` (empty array if no dependencies)
+            3. Add English + zh-TW descriptions
+            4. Add to `REMOTE_SKILLS` with: `{ repo: 'anthropics/skills', path: 'skills/<name>', branch: 'main' }`
+
+            If upstream deleted a skill, remove it from `SKILLS`, `DEPENDENCIES`,
+            `REMOTE_SKILLS`, and both language descriptions.
 
             ### Step 3: Update zh-TW translations
 
-            For each modified or new LOCAL skill, update the corresponding file under
+            For each modified or new skill, update the corresponding file under
             `i18n/zh-TW/<skill-name>/`. Translate the SKILL.md to Traditional Chinese.
             Keep the same YAML frontmatter structure.
 
@@ -189,26 +174,17 @@ jobs:
 
             If new skills were added or existing skills removed:
             1. Update the skill count in "Available Skills (N)"
-            2. Update the "Anthropic Official Skills" section with new/removed entries
-            3. Update the Skill Sources table if the skill list changed
-            4. Update GEMINI.md if needed
+            2. Update the "Anthropic Official Skills" section
+            3. Update GEMINI.md if needed
 
             ### Step 5: Create PR
 
             Create a pull request with:
             - **Title**: `sync: update skills from upstream anthropics/skills`
-            - **Body**: Include a clear summary of:
-              - Which upstream commits/PRs triggered this sync
-              - Which skill directories were updated
-              - What changes were made to `bin/install.mjs` (if any)
-              - What zh-TW translations were added/updated
+            - **Body**: Include a clear summary of changes
 
             ## Rules
 
-            - Do NOT modify skills that are NOT from upstream anthropics/skills
-            - Do NOT create local directories for REMOTE skills (docx, pdf, pptx, xlsx)
-            - ONLY create a PR if there are actual file changes to sync
-            - If after analysis no files actually differ, do NOT create a PR
-            - All existing tests and lint must pass
-            - Keep `bin/install.mjs` consistent with locally available skill directories
-            - Remember: upstream path is `skills/<name>/`, local path is `<name>/`
+            - Do NOT create root-level skill directories (ALL skills are remote-downloaded)
+            - Do NOT modify skills not from this upstream
+            - ONLY create a PR if there are actual changes to sync

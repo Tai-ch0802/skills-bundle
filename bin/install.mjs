@@ -231,10 +231,61 @@ const SKILLS = [
 
 // Remote skills — not stored in this repo; downloaded at install time from upstream
 const REMOTE_SKILLS = {
+  // --- anthropics/skills (upstream path: skills/<name>) ---
+  'algorithmic-art': { repo: 'anthropics/skills', path: 'skills/algorithmic-art', branch: 'main' },
+  'brand-guidelines': { repo: 'anthropics/skills', path: 'skills/brand-guidelines', branch: 'main' },
+  'canvas-design': { repo: 'anthropics/skills', path: 'skills/canvas-design', branch: 'main' },
+  'claude-api': { repo: 'anthropics/skills', path: 'skills/claude-api', branch: 'main' },
+  'doc-coauthoring': { repo: 'anthropics/skills', path: 'skills/doc-coauthoring', branch: 'main' },
   docx: { repo: 'anthropics/skills', path: 'skills/docx', branch: 'main' },
+  'frontend-design': { repo: 'anthropics/skills', path: 'skills/frontend-design', branch: 'main' },
+  'internal-comms': { repo: 'anthropics/skills', path: 'skills/internal-comms', branch: 'main' },
+  'mcp-builder': { repo: 'anthropics/skills', path: 'skills/mcp-builder', branch: 'main' },
   pdf: { repo: 'anthropics/skills', path: 'skills/pdf', branch: 'main' },
   pptx: { repo: 'anthropics/skills', path: 'skills/pptx', branch: 'main' },
+  'skill-creator': { repo: 'anthropics/skills', path: 'skills/skill-creator', branch: 'main' },
+  'slack-gif-creator': { repo: 'anthropics/skills', path: 'skills/slack-gif-creator', branch: 'main' },
+  'theme-factory': { repo: 'anthropics/skills', path: 'skills/theme-factory', branch: 'main' },
+  'web-artifacts-builder': { repo: 'anthropics/skills', path: 'skills/web-artifacts-builder', branch: 'main' },
+  'webapp-testing': { repo: 'anthropics/skills', path: 'skills/webapp-testing', branch: 'main' },
   xlsx: { repo: 'anthropics/skills', path: 'skills/xlsx', branch: 'main' },
+
+  // --- vudovn/antigravity-kit (upstream path: <name>, root-level) ---
+  'api-patterns': { repo: 'vudovn/antigravity-kit', path: 'api-patterns', branch: 'main' },
+  'app-builder': { repo: 'vudovn/antigravity-kit', path: 'app-builder', branch: 'main' },
+  architecture: { repo: 'vudovn/antigravity-kit', path: 'architecture', branch: 'main' },
+  'bash-linux': { repo: 'vudovn/antigravity-kit', path: 'bash-linux', branch: 'main' },
+  'behavioral-modes': { repo: 'vudovn/antigravity-kit', path: 'behavioral-modes', branch: 'main' },
+  brainstorming: { repo: 'vudovn/antigravity-kit', path: 'brainstorming', branch: 'main' },
+  'database-design': { repo: 'vudovn/antigravity-kit', path: 'database-design', branch: 'main' },
+  'deployment-procedures': { repo: 'vudovn/antigravity-kit', path: 'deployment-procedures', branch: 'main' },
+  'documentation-templates': { repo: 'vudovn/antigravity-kit', path: 'documentation-templates', branch: 'main' },
+  'game-development': { repo: 'vudovn/antigravity-kit', path: 'game-development', branch: 'main' },
+  'geo-fundamentals': { repo: 'vudovn/antigravity-kit', path: 'geo-fundamentals', branch: 'main' },
+  'i18n-localization': { repo: 'vudovn/antigravity-kit', path: 'i18n-localization', branch: 'main' },
+  'intelligent-routing': { repo: 'vudovn/antigravity-kit', path: 'intelligent-routing', branch: 'main' },
+  'lint-and-validate': { repo: 'vudovn/antigravity-kit', path: 'lint-and-validate', branch: 'main' },
+  'mobile-design': { repo: 'vudovn/antigravity-kit', path: 'mobile-design', branch: 'main' },
+  'nextjs-react-expert': { repo: 'vudovn/antigravity-kit', path: 'nextjs-react-expert', branch: 'main' },
+  'nodejs-best-practices': { repo: 'vudovn/antigravity-kit', path: 'nodejs-best-practices', branch: 'main' },
+  'parallel-agents': { repo: 'vudovn/antigravity-kit', path: 'parallel-agents', branch: 'main' },
+  'performance-profiling': { repo: 'vudovn/antigravity-kit', path: 'performance-profiling', branch: 'main' },
+  'plan-writing': { repo: 'vudovn/antigravity-kit', path: 'plan-writing', branch: 'main' },
+  'powershell-windows': { repo: 'vudovn/antigravity-kit', path: 'powershell-windows', branch: 'main' },
+  'python-patterns': { repo: 'vudovn/antigravity-kit', path: 'python-patterns', branch: 'main' },
+  'red-team-tactics': { repo: 'vudovn/antigravity-kit', path: 'red-team-tactics', branch: 'main' },
+  'rust-pro': { repo: 'vudovn/antigravity-kit', path: 'rust-pro', branch: 'main' },
+  'seo-fundamentals': { repo: 'vudovn/antigravity-kit', path: 'seo-fundamentals', branch: 'main' },
+  'server-management': { repo: 'vudovn/antigravity-kit', path: 'server-management', branch: 'main' },
+  'systematic-debugging': { repo: 'vudovn/antigravity-kit', path: 'systematic-debugging', branch: 'main' },
+  'tailwind-patterns': { repo: 'vudovn/antigravity-kit', path: 'tailwind-patterns', branch: 'main' },
+  'vulnerability-scanner': { repo: 'vudovn/antigravity-kit', path: 'vulnerability-scanner', branch: 'main' },
+  'web-design-guidelines': { repo: 'vudovn/antigravity-kit', path: 'web-design-guidelines', branch: 'main' },
+
+  // --- google-gemini/gemini-skills (upstream path: skills/<name>) ---
+  'gemini-api-dev': { repo: 'google-gemini/gemini-skills', path: 'skills/gemini-api-dev', branch: 'main' },
+  'gemini-interactions-api': { repo: 'google-gemini/gemini-skills', path: 'skills/gemini-interactions-api', branch: 'main' },
+  'gemini-live-api-dev': { repo: 'google-gemini/gemini-skills', path: 'skills/gemini-live-api-dev', branch: 'main' },
 };
 
 const DEPENDENCIES = {

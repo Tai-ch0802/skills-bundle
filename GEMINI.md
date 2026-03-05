@@ -18,7 +18,7 @@ This repository is a **curated collection of 62 AI agent skills** for coding ass
 
 > **Core Principle (SDD)**: "No Spec, No Code" — Every feature requires complete documentation before implementation.
 
-> **Remote Skills**: `docx`, `pdf`, `pptx`, `xlsx` are not stored locally — they are downloaded at install time from [anthropics/skills](https://github.com/anthropics/skills) due to proprietary licensing.
+> **Remote Download Architecture**: Skills from GitHub repos (Antigravity Kit, Anthropic, Gemini) are **not stored locally** — they are downloaded at install time. Only original skills, composites, ClawHub skills, and zh-TW translations are stored in this repo.
 
 ## For AI Agents
 
@@ -57,27 +57,15 @@ skills-bundle/
 ├── refactoring/           # Refactoring skill
 ├── testing-mastery/       # Composite: unified testing
 ├── code-quality/          # Composite: standards + review
+├── humanizer/             # ClawHub: Remove AI writing patterns
+├── skill-vetter/          # ClawHub: Security-first skill vetting
 ├── pcloud/                # pCloud cloud storage API
 ├── agent-brain/           # Persistent cross-session memory
-├── gemini-api-dev/        # Gemini API development
-├── gemini-interactions-api/ # Gemini Interactions API development
-├── gemini-live-api-dev/   # Gemini Live API development
-├── humanizer/             # ClawHub: Remove AI writing patterns
-├── algorithmic-art/       # ┐
-├── canvas-design/         # │ Anthropic Official skills
-├── claude-api/            # │ (17 skills from anthropics/skills)
-├── frontend-design/       # │ includes doc creation skills
-├── mcp-builder/           # │ (docx/pdf/pptx/xlsx remote)
-├── webapp-testing/        # ┘
-├── api-patterns/          # ┐
-├── architecture/          # │ Antigravity Kit skills
-├── mobile-design/         # │ (28 skills from vudovn)
-├── ...                    # ┘
 ├── i18n/
-│   └── zh-TW/             # Traditional Chinese translations
+│   └── zh-TW/             # Traditional Chinese translations (all 62 skills)
 ├── bin/
-│   └── install.mjs        # Interactive CLI installer
-├── .github/workflows/     # Upstream sync GitHub Actions
+│   └── install.mjs        # Interactive installer (⚡ downloads 48 skills at runtime)
+├── .github/workflows/     # Upstream sync GitHub Actions (metadata & i18n only)
 └── package.json
 ```
 
@@ -92,7 +80,8 @@ skills-bundle/
 
 When modifying skills:
 1. Follow the YAML frontmatter format in `SKILL.md` files
-2. Test skill invocation with a sample project
+2. Only locally-stored skills can be edited directly; remote skills require upstream PRs
 3. Update templates in `references/` as needed
 4. When adding translations, mirror the English structure under `i18n/{locale}/`
 5. Run the installer to verify new skills are correctly listed
+6. To add new remote skills, update `REMOTE_SKILLS` in `bin/install.mjs`
