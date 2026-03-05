@@ -15,10 +15,11 @@ This project integrates skills from multiple sources:
 | **Original** | `prd`, `sa`, `sdd`, `refactoring` | [@Tai-ch0802](https://github.com/Tai-ch0802) |
 | **[antigravity-kit](https://github.com/vudovn/antigravity-kit)** | 31 skills (see below) | [@vudovn](https://github.com/vudovn) |
 | **[gemini-skills](https://github.com/google-gemini/gemini-skills)** | `gemini-api-dev`, `gemini-interactions-api`, `gemini-live-api-dev` | [@google-gemini](https://github.com/google-gemini) |
+| **[humanizer](https://clawhub.ai/biostartechnology/humanizer)**, **[skill-vetter](https://clawhub.ai/spclaudehome/skill-vetter)** | `humanizer`, `skill-vetter` | ClawHub authors |
 | **Composite (new)** | `testing-mastery`, `code-quality` | Merged & curated by [@Tai-ch0802](https://github.com/Tai-ch0802) |
 | **Cloud & Memory** | `pcloud`, `agent-brain` | [@Tai-ch0802](https://github.com/Tai-ch0802) |
 
-## Available Skills (43)
+## Available Skills (45)
 
 ### SDD Pack (Original)
 
@@ -80,6 +81,13 @@ This project integrates skills from multiple sources:
 | **[gemini-api-dev](./gemini-api-dev/SKILL.md)** | Gemini API development — SDK usage, multimodal, function calling, structured output |
 | **[gemini-interactions-api](./gemini-interactions-api/SKILL.md)** | Gemini Interactions API — agentic applications, server-side state, tool orchestration, deep research |
 | **[gemini-live-api-dev](./gemini-live-api-dev/SKILL.md)** | Gemini Live API development — real-time audio/video streaming, WebSockets, native audio |
+
+### ClawHub Skills (from [biostartechnology/humanizer](https://clawhub.ai/biostartechnology/humanizer))
+
+| Skill | Description |
+|-------|-------------|
+| **[humanizer](./humanizer/SKILL.md)** | Remove AI writing patterns — inflated symbolism, AI vocabulary, em dash overuse, vague attributions |
+| **[skill-vetter](./skill-vetter/SKILL.md)** | Security-first skill vetting — red flags, permission scope, suspicious patterns |
 
 ### Composite Skills (Merged & Curated)
 
@@ -190,5 +198,7 @@ skills-bundle/
 - **SDD Pack & Refactoring** — Original work by [@Tai-ch0802](https://github.com/Tai-ch0802)
 - **Antigravity Kit Skills** — From [vudovn/antigravity-kit](https://github.com/vudovn/antigravity-kit) by [@vudovn](https://github.com/vudovn)
 - **Gemini API Skills** — From [google-gemini/gemini-skills](https://github.com/google-gemini/gemini-skills) by [@google-gemini](https://github.com/google-gemini)
+- **Humanizer Skill** — From [biostartechnology/humanizer](https://clawhub.ai/biostartechnology/humanizer) on ClawHub
+- **Skill Vetter** — From [spclaudehome/skill-vetter](https://clawhub.ai/spclaudehome/skill-vetter) on ClawHub
 - **Cloud & Memory Skills** — pCloud API integration and agent-brain by [@Tai-ch0802](https://github.com/Tai-ch0802)
 - **Composite Skills & Translations** — Curated and translated by [@Tai-ch0802](https://github.com/Tai-ch0802)
