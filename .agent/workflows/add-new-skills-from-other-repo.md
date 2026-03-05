@@ -1,10 +1,10 @@
 ---
-description: 從其他 GitHub repo 引入 skills 至 skills-bundle，包含技能複製、翻譯、安裝器更新、文件更新、及建立自動同步 GitHub Action
+description: 從其他 GitHub repo 引入 skills 至 skills-bundle，包含翻譯建立、安裝器設定更新、文件更新、及建立自動同步 GitHub Action (遠端下載架構)
 ---
 
 # 從其他 Repo 引入 Skills
 
-本工作流程描述如何將外部 GitHub repository 中的 skills 整合至 `skills-bundle` 專案。
+本工作流程描述如何將外部 GitHub repository 中的 skills 整合至 `skills-bundle` 專案。因本專案採用 **遠端下載架構**，我們不再將完整的 skill 目錄複製到本地，而是更新安裝器配置讓用戶安裝時動態下載，本地僅需維護繁體中文翻譯與 Action workflow。
 
 ## 前置準備
 
@@ -25,214 +25,159 @@ rm -rf /tmp/upstream-skills && git clone --depth 1 <UPSTREAM_URL> /tmp/upstream-
 
 分析重點：
 - [ ] 列出所有 skill 目錄及其內容（`ls -la /tmp/upstream-skills/`）
-- [ ] 確認 skill 目錄的位置（根目錄 or 子目錄如 `skills/`）
+- [ ] 確認 skill 目錄的位置（是在根目錄還是子目錄如 `skills/`？）
 - [ ] 閱讀每個 skill 的 `SKILL.md`，理解其用途
-- [ ] 確認是否有 skill 已存在於本地（避免重複或衝突）
+- [ ] 確認是否有 skill 衝突（同名）
 
 > [!IMPORTANT]
-> 不同 repo 的目錄結構可能不同。例如：
-> - `vudovn/antigravity-kit`：skill 在根目錄 `<name>/`
-> - `google-gemini/gemini-skills`：skill 在 `skills/<name>/`
->
-> 記錄此路徑映射關係，後續 GitHub Action 會用到。
+> 記錄 skill 的路徑映射關係（例如 `vudovn/antigravity-kit` 是根目錄，而 `anthropics/skills` 是在 `skills/` 底下）。後續設定 `install.mjs` 以及 GitHub Action 都會用到這條路徑。
 
-### 2. 複製 Skill 檔案至本地
+### 2. 建立 zh-TW 翻譯
 
-將 skill 目錄複製到本地 repo 的根目錄：
+> [!WARNING]
+> 本專案為遠端下載架構：來自 GitHub 的 skills **不** 放入本地根目錄。僅需在本地保留 `i18n/zh-TW/` 的翻譯檔與安裝器的 metadata。
+
+為每個新 skill 建立繁體中文翻譯目錄，並複製原版的 `SKILL.md` 來進行翻譯：
 
 ```bash
-cp -r /tmp/upstream-skills/<path-to-skill>/<skill-name> ./<skill-name>
+mkdir -p i18n/zh-TW/<skill-name>
+cp /tmp/upstream-skills/<path-to-skill>/<skill-name>/SKILL.md i18n/zh-TW/<skill-name>/
 ```
 
-若上游有多個 skills，重複執行或批次複製：
+若上游有多個 skills，可批次處理：
 
 ```bash
 for skill in skill-a skill-b skill-c; do
-  cp -r /tmp/upstream-skills/skills/${skill} ./${skill}
+  mkdir -p i18n/zh-TW/${skill}
+  cp /tmp/upstream-skills/skills/${skill}/SKILL.md i18n/zh-TW/${skill}/
 done
-```
-
-驗證複製結果：
-
-// turbo
-```bash
-diff -r /tmp/upstream-skills/<path-to-skill>/<skill-name> ./<skill-name>
-```
-
-### 3. 建立 zh-TW 翻譯
-
-為每個新 skill 建立繁體中文翻譯：
-
-```
-i18n/zh-TW/<skill-name>/SKILL.md
 ```
 
 翻譯規則：
 - 保留 YAML frontmatter 結構（`name` 不翻譯，`description` 翻譯為中文）
-- 保留所有程式碼範例（僅翻譯註解與字串值中的 prompt 文字）
-- 保留所有 URL 連結不變
-- 使用繁體中文專業術語（如 函式呼叫、結構化輸出、多模態 等）
+- 保留所有程式碼範例與指令（僅翻譯註解與字串）
+- 保留所有 URL 連結與 Markdown 格式不變
+- 使用繁體中文的開發術語（如：函式呼叫、結構化輸出、多模態等）
 
-### 4. 更新 `bin/install.mjs`
+### 3. 更新 `bin/install.mjs`
 
-需要修改 4 個區塊（皆依字母順序插入）：
+需要在安裝器中修改 5 個區塊：
 
-#### 4a. `SKILLS` 陣列
-
-在 `SKILLS` 陣列中按字母順序加入新 skill：
-
+#### 3a. `SKILLS` 陣列
+在 `SKILLS` 陣列中按字母順序加入新 skill 的識別名：
 ```javascript
 const SKILLS = [
   // ...existing...
   '<new-skill>',
-  // ...existing...
 ];
 ```
 
-#### 4b. `DEPENDENCIES` 物件
-
+#### 3b. `DEPENDENCIES` 物件
 加入新 skill 的相依性（無相依則為空陣列）：
-
 ```javascript
 const DEPENDENCIES = {
   // ...existing...
   '<new-skill>': [],
-  // ...existing...
 };
 ```
 
-#### 4c. 英文 `skillDescriptions`
+#### 3c. `REMOTE_SKILLS` 配置
+在對應的 upstream repo 區塊下（或新增一個註解區塊）加入：
+```javascript
+const REMOTE_SKILLS = {
+  // ...
+  '<new-skill>': { repo: '<org>/<repo>', path: '<path-to-skill>/<new-skill>', branch: 'main' },
+};
+```
 
+#### 3d. 英文 `skillDescriptions`
 在 `LANGUAGES.en.messages.skillDescriptions` 加入英文描述：
-
 ```javascript
 '<new-skill>': 'Brief English description of the skill',
 ```
 
-#### 4d. 繁中 `skillDescriptions`
-
+#### 3e. 繁中 `skillDescriptions`
 在 `LANGUAGES['zh-TW'].messages.skillDescriptions` 加入繁中描述：
-
 ```javascript
 '<new-skill>': '技能的簡短繁體中文描述',
 ```
 
-### 5. 更新 `package.json`
-
-在 `files` 陣列中按字母順序加入新 skill 目錄：
-
-```json
-{
-  "files": [
-    "...",
-    "<new-skill>/",
-    "..."
-  ]
-}
-```
-
-### 6. 更新 `README.md`
+### 4. 更新 `README.md`
 
 需要修改 4 個區塊：
 
-#### 6a. Skill Sources 表格
-
+#### 4a. Skill Sources 表格
 新增一行來源（若為全新來源）：
-
 ```markdown
 | **[repo-name](https://github.com/org/repo)** | `skill-a`, `skill-b` | [@author](https://github.com/author) |
 ```
 
-#### 6b. Available Skills 數量
+#### 4b. Available Skills 數量
+更新標題中的技能總數。
 
-更新標題中的技能總數：
-
+#### 4c. 技能列表區塊
+新增對應區塊或在既有區塊中加入條目（遠端載入需使用 ⚡ 標記、並且不用建立 local file 連結）：
 ```markdown
-## Available Skills (N)  <!-- 原數 + 新增數 -->
-```
+### <Source Name> Skills ⚡ (from [org/repo](https://github.com/org/repo))
 
-#### 6c. 技能列表區塊
-
-新增對應區塊或在既有區塊中加入條目：
-
-```markdown
-### <Source Name> Skills (from [org/repo](https://github.com/org/repo))
+<details>
+<summary>Click to expand skills (remote-downloaded at install time)</summary>
 
 | Skill | Description |
 |-------|-------------|
-| **[skill-name](./skill-name/SKILL.md)** | Description |
+| **skill-name** | Description text goes here |
+
+</details>
 ```
 
-#### 6d. Credits 區塊
-
+#### 4d. Credits 區塊
 新增致謝：
-
 ```markdown
 - **<Source Name> Skills** — From [org/repo](https://github.com/org/repo) by [@author](https://github.com/author)
 ```
 
-### 7. 更新 `GEMINI.md`
+### 5. 更新 `GEMINI.md`
 
-在 "Currently available skill packs" 清單中加入新來源：
+更新技能總數，並在 "Skill Categories" 清單中加入新來源或更新 count/examples。
 
-```markdown
-- **<Pack Name>**: `skill-a/`, `skill-b/`
-```
-
-### 8. 建立 GitHub Action 同步 Workflow
+### 6. 建立 GitHub Action 同步 Workflow
 
 在 `.github/workflows/` 建立新的 workflow 檔案：
 
 **命名規則**: `sync-upstream-for-<org>-<repo>.yml`
 
-參考既有的 `sync-upstream-for-vudovn-antigravity-kit.yml`，建立新的 workflow，關鍵差異點：
-
-| 設定項 | 說明 |
-|--------|------|
-| `UPSTREAM_REPO` | 設定為上游的 `org/repo` |
-| **路徑映射** | 在 Jules prompt 中明確說明上游 skill 路徑與本地路徑的映射 |
-| **Skills 清單** | 列出所有來自此上游的 skill 名稱 |
-| **保護清單** | 列出所有 **不來自** 此上游的 skill（包含其他上游的 skills） |
+參考既有的 `sync-upstream-for-vudovn-antigravity-kit.yml`，建立新 workflow。
 
 > [!IMPORTANT]
-> Jules prompt 中的「保護清單」必須包含所有非此上游來源的 skills，
-> 避免 Jules 意外修改到其他來源的技能。可從 `bin/install.mjs` 的 `SKILLS` 陣列推導。
+> 必須在 Jules prompt 內明確給出指示：
+> **此專案採遠端下載架構，不可把上游 skill 目錄複製到本地！**
+> Jules 只需要負責：更新 metadata（`install.mjs` 中的描述與 `REMOTE_SKILLS` 等）、維護 `i18n/zh-TW/` 下的翻譯、更新 `README.md`。
+> 並且記得放入「只處理該上游技能，不可修改其他來源技能的保護性聲明」。
 
-Workflow 結構（兩階段）：
-1. **Phase 1: Detect** — 用 GitHub API 偵測上游近 24 小時的 commits 和 merged PRs
-2. **Phase 2: Jules** — 若有變更，呼叫 `google-labs-code/jules-action@v1.0.0` 同步
-
-### 9. 驗證
+### 7. 驗證
 
 // turbo
 ```bash
-# 確認新 skill 檔案存在
-ls -la <skill-name>/SKILL.md i18n/zh-TW/<skill-name>/SKILL.md
+# 確認新翻譯檔案存在
+ls -la i18n/zh-TW/<skill-name>/SKILL.md
 
-# 確認 install.mjs 包含新 skill
+# 確認 install.mjs 包含新 skill 的 metadata
 grep '<skill-name>' bin/install.mjs
-
-# 確認 package.json 包含新 skill
-grep '<skill-name>' package.json
 
 # 確認 README.md 包含新 skill
 grep '<skill-name>' README.md
-
-# 確認 workflow YAML 語法有效
-python3 -c "import yaml; yaml.safe_load(open('.github/workflows/sync-upstream-for-<org>-<repo>.yml')); print('✅ YAML valid')" \
-  || node -e "require('yaml').parse(require('fs').readFileSync('.github/workflows/sync-upstream-for-<org>-<repo>.yml','utf8')); console.log('✅ YAML valid')"
 ```
 
-### 10. Commit 並推送
+### 8. Commit 並推送
 
 ```bash
 git add -A
 git commit -m "feat: integrate <skill-names> from <org>/<repo>
 
-- Add <skill-name> skill(s)
-- Add zh-TW translation(s)
-- Add GitHub Action workflow for upstream sync
-- Update bin/install.mjs, package.json, README.md, GEMINI.md"
+- Add translation for <skill-names>
+- Update remote download configurations in install.mjs
+- Add GitHub Action workflow for upstream metadata sync
+- Update README.md and GEMINI.md"
 ```
 
 ## 清單速覽
@@ -240,12 +185,10 @@ git commit -m "feat: integrate <skill-names> from <org>/<repo>
 | # | 項目 | 涉及檔案 |
 |---|------|----------|
 | 1 | 研究上游結構 | (讀取) |
-| 2 | 複製 skill 檔案 | `<skill>/SKILL.md` |
-| 3 | 建立 zh-TW 翻譯 | `i18n/zh-TW/<skill>/SKILL.md` |
-| 4 | 更新安裝器 | `bin/install.mjs` |
-| 5 | 更新套件設定 | `package.json` |
-| 6 | 更新 README | `README.md` |
-| 7 | 更新 GEMINI.md | `GEMINI.md` |
-| 8 | 建立同步 Action | `.github/workflows/sync-upstream-for-*.yml` |
-| 9 | 驗證 | (指令) |
-| 10 | Commit | (git) |
+| 2 | 建立 zh-TW 翻譯 | `i18n/zh-TW/<skill>/SKILL.md` |
+| 3 | 更新安裝器與設定 | `bin/install.mjs` |
+| 4 | 更新 README | `README.md` |
+| 5 | 更新 GEMINI.md | `GEMINI.md` |
+| 6 | 建立同步 Action | `.github/workflows/sync-upstream-for-*.yml` |
+| 7 | 驗證 | (指令) |
+| 8 | Commit | (git) |
