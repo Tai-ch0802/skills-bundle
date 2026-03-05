@@ -19,6 +19,7 @@ echo ""
 echo "📁 Creating directory structure..."
 mkdir -p "${BRAIN_DIR}/sessions"
 mkdir -p "${BRAIN_DIR}/projects"
+mkdir -p "${BRAIN_DIR}/tmp"
 echo "   Created ${BRAIN_DIR}/"
 
 # 2. Handle pCloud authentication
@@ -104,9 +105,9 @@ EOF
 fi
 
 # 3. Initialize sync state
-SYNC_STATE="${BRAIN_DIR}/.sync-state.json"
-if [[ ! -f "${SYNC_STATE}" ]]; then
-  echo '{"last_sync": null, "files": {}}' > "${SYNC_STATE}"
+SYNC_MANIFEST="${BRAIN_DIR}/.sync-manifest.json"
+if [[ ! -f "${SYNC_MANIFEST}" ]]; then
+  echo '{"files": {}}' > "${SYNC_MANIFEST}"
 fi
 
 # 4. Initialize memory files if they don't exist
@@ -187,7 +188,8 @@ fi
 # 7. Offer to install global workflows
 echo ""
 echo "📋 Agent Brain includes global workflows for your AI agent:"
-echo "   • /save-brain — Flush session memory and sync to pCloud"
+echo "   • /save-brain — Flush session memory (local only)"
+echo "   • /sync-brain — Sync memory to/from pCloud (incremental)"
 echo "   • /load-brain — Load cross-session memory into context"
 echo ""
 read -r -p "   Install workflows to ~/.agent/workflows/? [Y/n] " INSTALL_WF

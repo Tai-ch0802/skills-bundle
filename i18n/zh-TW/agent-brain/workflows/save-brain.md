@@ -1,8 +1,8 @@
 ---
-description: 將當前的 session 記憶寫入 agent-brain 並同步至 pCloud
+description: 將當前的 session 記憶寫入 agent-brain（僅限本地儲存）
 ---
 
-這個 workflow 將強制觸發 agent-brain 的 session 結束程序。
+這個 workflow 將強制觸發 agent-brain 的 session 結束程序。僅在本地儲存記憶，不會同步至 pCloud — 如需同步至雲端，請使用 `/sync-brain`。
 
 // turbo-all
 
@@ -14,8 +14,4 @@ description: 將當前的 session 記憶寫入 agent-brain 並同步至 pCloud
    ```bash
    python3 ~/.gemini/antigravity/skills/agent-brain/scripts/index-memory.py index
    ```
-6. 同步資料至 pCloud：
-   ```bash
-   bash ~/.gemini/antigravity/skills/agent-brain/scripts/sync.sh push
-   ```
-7. 使用 notify_user 告知使用者："✅ 記憶已成功儲存並同步至 pCloud！"
+6. 使用 notify_user 告知使用者：「✅ 記憶已儲存至本地！如需同步至 pCloud，請執行 `/sync-brain`。」

@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# sync.sh — Bidirectional pCloud sync for agent-brain
+# sync.sh — Incremental SHA-based pCloud sync for agent-brain
 # Usage: sync.sh [push|pull|sync]
 set -euo pipefail
 
 BRAIN_DIR="${HOME}/.agent-brain"
 ENV_FILE="${BRAIN_DIR}/.env"
-SYNC_STATE="${BRAIN_DIR}/.sync-state.json"
+MANIFEST="${BRAIN_DIR}/.sync-manifest.json"
+TMP_DIR="${BRAIN_DIR}/tmp"
 
 # Validate environment
 if [[ ! -f "${ENV_FILE}" ]]; then
@@ -23,6 +24,79 @@ MODE="${1:-sync}"
 # ─── Helper Functions ────────────────────────────────────────────────
 
 log() { echo "   $1"; }
+
+# Compute SHA256 of a local file (macOS + Linux compatible)
+local_sha256() {
+  local file="$1"
+  if command -v shasum &>/dev/null; then
+    shasum -a 256 "$file" | cut -d' ' -f1
+  else
+    sha256sum "$file" | cut -d' ' -f1
+  fi
+}
+
+# Get manifest SHA for a given relative path (returns empty if not found)
+manifest_sha() {
+  local rel_path="$1"
+  if [[ ! -f "${MANIFEST}" ]]; then
+    echo ""
+    return
+  fi
+  python3 -c "
+import json, sys
+try:
+    with open('${MANIFEST}') as f:
+        m = json.load(f)
+    print(m.get('files', {}).get(sys.argv[1], {}).get('sha256', ''))
+except:
+    print('')
+" "$rel_path"
+}
+
+# Update manifest entry for a file
+update_manifest() {
+  local rel_path="$1"
+  local sha="$2"
+  python3 -c "
+import json, time, sys, os
+
+manifest_path = '${MANIFEST}'
+try:
+    with open(manifest_path) as f:
+        m = json.load(f)
+except:
+    m = {}
+
+if 'files' not in m:
+    m['files'] = {}
+
+m['files'][sys.argv[1]] = {
+    'sha256': sys.argv[2],
+    'synced_at': time.strftime('%Y-%m-%dT%H:%M:%S%z')
+}
+
+with open(manifest_path, 'w') as f:
+    json.dump(m, f, indent=2, ensure_ascii=False)
+" "$rel_path" "$sha"
+}
+
+# Remove a file entry from manifest
+remove_from_manifest() {
+  local rel_path="$1"
+  python3 -c "
+import json, sys
+
+manifest_path = '${MANIFEST}'
+try:
+    with open(manifest_path) as f:
+        m = json.load(f)
+    m.get('files', {}).pop(sys.argv[1], None)
+    with open(manifest_path, 'w') as f:
+        json.dump(m, f, indent=2, ensure_ascii=False)
+except:
+    pass
+" "$rel_path"
+}
 
 # Ensure remote folder exists (creates recursively)
 ensure_remote_folder() {
@@ -82,7 +156,7 @@ download_file() {
 
   if [[ "${result}" != "0" ]]; then
     log "⚠ Skip ${remote_path} (not found)"
-    return
+    return 1
   fi
 
   local download_url
@@ -95,6 +169,26 @@ print('https://' + d['hosts'][0] + d['path'])
   mkdir -p "$(dirname "${local_path}")"
   curl -s -o "${local_path}" "${download_url}"
   log "↓ ${remote_path}"
+  return 0
+}
+
+# Get remote file SHA256 via pCloud checksumfile API
+remote_sha256() {
+  local remote_path="$1"
+  local response
+  response=$(curl -s -H "${AUTH_HEADER}" "${API}/checksumfile?path=${REMOTE_BASE}${remote_path}")
+
+  echo "${response}" | python3 -c "
+import sys, json
+try:
+    d = json.load(sys.stdin)
+    if d.get('result') == 0:
+        print(d.get('sha256', ''))
+    else:
+        print('')
+except:
+    print('')
+"
 }
 
 # List all files in a remote pCloud folder recursively
@@ -126,48 +220,205 @@ except:
 "
 }
 
-# ─── Push: Upload local changes to pCloud ────────────────────────────
+# Check if a file should be excluded from sync
+is_excluded() {
+  local relative="$1"
+  case "${relative}" in
+    /.env|/.sync-manifest.json|/.sync-state.json) return 0 ;;
+    /tmp|/tmp/*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+# ─── Merge Logic ─────────────────────────────────────────────────────
+
+# Merge two markdown files (session logs: append-only dedup)
+merge_session_md() {
+  local local_file="$1"
+  local remote_file="$2"
+  local output_file="$3"
+
+  python3 -c "
+import re, sys
+
+def extract_sessions(text):
+    \"\"\"Extract session blocks from a session markdown file.\"\"\"
+    blocks = re.split(r'(?=^## Session \d{2}:\d{2})', text, flags=re.MULTILINE)
+    return [b.strip() for b in blocks if b.strip()]
+
+local_path, remote_path, output_path = sys.argv[1], sys.argv[2], sys.argv[3]
+
+local_text = open(local_path, encoding='utf-8').read() if __import__('os').path.exists(local_path) else ''
+remote_text = open(remote_path, encoding='utf-8').read()
+
+# Extract header (# Sessions — date) and session blocks
+local_blocks = extract_sessions(local_text)
+remote_blocks = extract_sessions(remote_text)
+
+# Use content fingerprints to dedup
+seen = set()
+merged = []
+
+for block in local_blocks + remote_blocks:
+    # Use first 2 lines as fingerprint
+    fingerprint = '\\n'.join(block.split('\\n')[:2])
+    if fingerprint not in seen:
+        seen.add(fingerprint)
+        merged.append(block)
+
+with open(output_path, 'w', encoding='utf-8') as f:
+    f.write('\\n\\n---\\n\\n'.join(merged) + '\\n')
+" "$local_file" "$remote_file" "$output_file"
+}
+
+# Merge two general markdown files (MEMORY.md, USER.md, projects/*.md)
+merge_general_md() {
+  local local_file="$1"
+  local remote_file="$2"
+  local output_file="$3"
+
+  python3 -c "
+import sys, os
+
+local_path, remote_path, output_path = sys.argv[1], sys.argv[2], sys.argv[3]
+
+local_text = open(local_path, encoding='utf-8').read() if os.path.exists(local_path) else ''
+remote_text = open(remote_path, encoding='utf-8').read()
+
+local_lines = set(local_text.strip().split('\\n'))
+remote_lines = set(remote_text.strip().split('\\n'))
+
+# If identical, just use local
+if local_text.strip() == remote_text.strip():
+    with open(output_path, 'w', encoding='utf-8') as f:
+        f.write(local_text)
+    sys.exit(0)
+
+# Strategy: use remote as base, append local-only lines at the end
+remote_sections = remote_text.strip().split('\\n')
+local_only = [l for l in local_text.strip().split('\\n') if l not in remote_lines and l.strip()]
+
+if local_only:
+    result = remote_text.rstrip() + '\\n\\n<!-- merged from local -->\\n' + '\\n'.join(local_only) + '\\n'
+else:
+    result = remote_text
+
+with open(output_path, 'w', encoding='utf-8') as f:
+    f.write(result)
+" "$local_file" "$remote_file" "$output_file"
+}
+
+# Merge SQLite databases: import local records into remote db
+merge_brain_db() {
+  local local_db="$1"
+  local remote_db="$2"
+  local output_db="$3"
+
+  python3 -c "
+import sqlite3, sys, os, shutil
+
+local_db_path, remote_db_path, output_db_path = sys.argv[1], sys.argv[2], sys.argv[3]
+
+# Start with remote as base
+shutil.copy2(remote_db_path, output_db_path)
+
+if not os.path.exists(local_db_path):
+    sys.exit(0)
+
+try:
+    local_conn = sqlite3.connect(local_db_path)
+    output_conn = sqlite3.connect(output_db_path)
+
+    # Get local chunks not in remote (by file_path + chunk_index)
+    local_chunks = local_conn.execute(
+        'SELECT file_path, chunk_index, content, file_hash, updated_at FROM chunks'
+    ).fetchall()
+
+    existing = set()
+    for row in output_conn.execute('SELECT file_path, chunk_index FROM chunks'):
+        existing.add((row[0], row[1]))
+
+    inserted = 0
+    for file_path, chunk_index, content, file_hash, updated_at in local_chunks:
+        if (file_path, chunk_index) not in existing:
+            output_conn.execute(
+                'INSERT INTO chunks (file_path, chunk_index, content, file_hash, updated_at) VALUES (?, ?, ?, ?, ?)',
+                (file_path, chunk_index, content, file_hash, updated_at)
+            )
+            inserted += 1
+
+    # Similarly merge file_state
+    local_states = local_conn.execute(
+        'SELECT file_path, file_hash, indexed_at FROM file_state'
+    ).fetchall()
+
+    for file_path, file_hash, indexed_at in local_states:
+        output_conn.execute(
+            'INSERT OR REPLACE INTO file_state (file_path, file_hash, indexed_at) VALUES (?, ?, ?)',
+            (file_path, file_hash, indexed_at)
+        )
+
+    output_conn.commit()
+    local_conn.close()
+    output_conn.close()
+
+    if inserted > 0:
+        print(f'   🔀 Merged {inserted} chunks into brain.db')
+except Exception as e:
+    print(f'   ⚠ DB merge error: {e}', file=sys.stderr)
+    # Fall back to remote version
+    shutil.copy2(remote_db_path, output_db_path)
+" "$local_db" "$remote_db" "$output_db"
+}
+
+# ─── Push: Upload changed files to pCloud ─────────────────────────────
 
 do_push() {
   echo "☁️  Pushing local changes to pCloud..."
   ensure_remote_folder ""
 
-  # Find all syncable files (exclude .env, .sync-state.json)
   local files_pushed=0
+  local files_skipped=0
 
   while IFS= read -r -d '' file; do
     local relative="${file#${BRAIN_DIR}}"
+
+    # Skip excluded files
+    if is_excluded "${relative}"; then
+      continue
+    fi
+
     local dir
     dir=$(dirname "${relative}")
-    # Normalize root "/" to empty string to avoid double-slash in remote paths
     [[ "${dir}" == "/" ]] && dir=""
 
-    # Skip files that should not be synced
-    case "${relative}" in
-      /.env|/.sync-state.json) continue ;;
-    esac
+    # Compute SHA and compare with manifest
+    local current_sha
+    current_sha=$(local_sha256 "${file}")
+    local saved_sha
+    saved_sha=$(manifest_sha "${relative}")
+
+    if [[ "${current_sha}" == "${saved_sha}" ]]; then
+      files_skipped=$((files_skipped + 1))
+      continue
+    fi
 
     upload_file "${file}" "${dir}"
+    update_manifest "${relative}" "${current_sha}"
     files_pushed=$((files_pushed + 1))
   done < <(find "${BRAIN_DIR}" -type f \
     ! -name ".env" \
+    ! -name ".sync-manifest.json" \
     ! -name ".sync-state.json" \
+    ! -path "*/tmp/*" \
     ! -path "*/.git/*" \
     -print0)
 
-  # Update sync state
-  python3 -c "
-import json, time
-state = {'last_sync': time.strftime('%Y-%m-%dT%H:%M:%S%z'), 'direction': 'push', 'files_count': ${files_pushed}}
-with open('${SYNC_STATE}', 'w') as f:
-    json.dump(state, f, indent=2)
-"
-
   log ""
-  log "✅ Pushed ${files_pushed} files to pCloud /agent-brain/"
+  log "✅ Pushed ${files_pushed} files (${files_skipped} unchanged)"
 }
 
-# ─── Pull: Download from pCloud to local ─────────────────────────────
+# ─── Pull: Download changed files from pCloud ─────────────────────────
 
 do_pull() {
   echo "☁️  Pulling from pCloud..."
@@ -181,22 +432,144 @@ do_pull() {
   fi
 
   local files_pulled=0
+  local files_skipped=0
+
   while IFS= read -r remote_path; do
+    # Skip excluded patterns
+    if is_excluded "${remote_path}"; then
+      continue
+    fi
+
     local local_path="${BRAIN_DIR}${remote_path}"
-    download_file "${remote_path}" "${local_path}"
-    files_pulled=$((files_pulled + 1))
+
+    # Check if local file exists and compare SHA
+    if [[ -f "${local_path}" ]]; then
+      local local_sha
+      local_sha=$(local_sha256 "${local_path}")
+      local r_sha
+      r_sha=$(remote_sha256 "${remote_path}")
+
+      if [[ -n "${r_sha}" && "${local_sha}" == "${r_sha}" ]]; then
+        files_skipped=$((files_skipped + 1))
+        continue
+      fi
+    fi
+
+    download_file "${remote_path}" "${local_path}" && {
+      # Update manifest with new SHA
+      local new_sha
+      new_sha=$(local_sha256 "${local_path}")
+      update_manifest "${remote_path}" "${new_sha}"
+      files_pulled=$((files_pulled + 1))
+    }
   done <<< "${remote_files}"
 
-  # Update sync state
-  python3 -c "
-import json, time
-state = {'last_sync': time.strftime('%Y-%m-%dT%H:%M:%S%z'), 'direction': 'pull', 'files_count': ${files_pulled}}
-with open('${SYNC_STATE}', 'w') as f:
-    json.dump(state, f, indent=2)
-"
-
   log ""
-  log "✅ Pulled ${files_pulled} files from pCloud /agent-brain/"
+  log "✅ Pulled ${files_pulled} files (${files_skipped} unchanged)"
+}
+
+# ─── Sync: Bidirectional with conflict resolution ─────────────────────
+
+do_sync() {
+  echo "🔄 Bidirectional sync with conflict resolution..."
+
+  # 1. Prepare tmp directory
+  mkdir -p "${TMP_DIR}"
+
+  # 2. Get list of remote files
+  local remote_files
+  remote_files=$(list_remote_files)
+
+  local conflicts=0
+  local merged=0
+
+  if [[ -n "${remote_files}" ]]; then
+    while IFS= read -r remote_path; do
+      if is_excluded "${remote_path}"; then
+        continue
+      fi
+
+      local local_path="${BRAIN_DIR}${remote_path}"
+      local tmp_path="${TMP_DIR}${remote_path}"
+
+      # If local file doesn't exist, just download
+      if [[ ! -f "${local_path}" ]]; then
+        download_file "${remote_path}" "${local_path}" && {
+          local new_sha
+          new_sha=$(local_sha256 "${local_path}")
+          update_manifest "${remote_path}" "${new_sha}"
+        }
+        continue
+      fi
+
+      # Both exist — check for conflict
+      local local_sha
+      local_sha=$(local_sha256 "${local_path}")
+      local saved_sha
+      saved_sha=$(manifest_sha "${remote_path}")
+      local r_sha
+      r_sha=$(remote_sha256 "${remote_path}")
+
+      # If remote hasn't changed, skip (local is authoritative)
+      if [[ -n "${r_sha}" && "${saved_sha}" == "${r_sha}" ]]; then
+        continue
+      fi
+
+      # If local hasn't changed since last sync, just pull remote
+      if [[ "${local_sha}" == "${saved_sha}" ]]; then
+        download_file "${remote_path}" "${local_path}" && {
+          local new_sha
+          new_sha=$(local_sha256 "${local_path}")
+          update_manifest "${remote_path}" "${new_sha}"
+        }
+        continue
+      fi
+
+      # Both changed — CONFLICT! Download remote to tmp and merge
+      log "⚠ Conflict: ${remote_path}"
+      conflicts=$((conflicts + 1))
+
+      mkdir -p "$(dirname "${tmp_path}")"
+      if ! download_file "${remote_path}" "${tmp_path}"; then
+        continue
+      fi
+
+      # Merge based on file type
+      case "${remote_path}" in
+        /sessions/*.md)
+          merge_session_md "${local_path}" "${tmp_path}" "${local_path}"
+          log "   🔀 Merged session log"
+          ;;
+        /brain.db)
+          merge_brain_db "${local_path}" "${tmp_path}" "${local_path}"
+          log "   🔀 Merged brain.db"
+          ;;
+        *.md)
+          merge_general_md "${local_path}" "${tmp_path}" "${local_path}"
+          log "   🔀 Merged markdown"
+          ;;
+        *)
+          # For other files, remote wins
+          cp "${tmp_path}" "${local_path}"
+          log "   ← Used remote version"
+          ;;
+      esac
+
+      merged=$((merged + 1))
+    done <<< "${remote_files}"
+  fi
+
+  # 3. Clean up tmp
+  rm -rf "${TMP_DIR}"
+
+  # 4. Now push all local changes
+  echo ""
+  do_push
+
+  if [[ ${conflicts} -gt 0 ]]; then
+    log ""
+    log "🔀 Resolved ${merged}/${conflicts} conflicts"
+  fi
 }
 
 # ─── Main ────────────────────────────────────────────────────────────
@@ -209,15 +582,13 @@ case "${MODE}" in
     do_pull
     ;;
   sync)
-    do_pull
-    echo ""
-    do_push
+    do_sync
     ;;
   *)
     echo "Usage: sync.sh [push|pull|sync]"
-    echo "  push  — Upload local changes to pCloud"
-    echo "  pull  — Download from pCloud to local"
-    echo "  sync  — Pull first, then push (bidirectional)"
+    echo "  push  — Upload changed files to pCloud (incremental)"
+    echo "  pull  — Download changed files from pCloud (incremental)"
+    echo "  sync  — Bidirectional sync with conflict resolution"
     exit 1
     ;;
 esac

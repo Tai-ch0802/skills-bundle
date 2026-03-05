@@ -38,7 +38,7 @@ During normal session operation, no special brain actions are needed. The agent 
 
 **Passive observation**: Note any user preferences, decisions, or learnings that should be captured at session end. Do NOT interrupt the user's workflow to write memory.
 
-## Phase 3: Session End
+## Phase 3: Session End (Local Only)
 
 ### Trigger Detection
 
@@ -56,6 +56,8 @@ Monitor for these patterns in user messages:
 - `部署完成`, `deploy done`
 
 When medium-confidence triggers are detected, include memory flush as a natural part of the workflow. Do not ask "should I save brain?" — just do it seamlessly.
+
+> **Important**: Session end saves memory locally only. Cloud sync is a separate action via `/sync-brain`.
 
 ### Summary Generation Rules
 
@@ -107,19 +109,46 @@ When a project hasn't been referenced in 60+ days:
 
 ## Conflict Resolution (pCloud Sync)
 
-When pulling from pCloud and local file differs:
+Conflicts occur when both local and remote files have changed since the last sync (detected by comparing current SHA256 with the `.sync-manifest.json` record).
 
-1. **sessions/*.md**: Append-only, merge by appending remote content not in local
-2. **MEMORY.md / USER.md**: If pCloud version is newer, save local as `.local-backup`, use pCloud version
-3. **brain.db**: Always regenerate locally after pull by running index-memory.py
-4. **projects/*.md**: Same strategy as MEMORY.md
+### Resolution Flow
+
+1. **Create staging area**: `~/.agent-brain/tmp/` is created
+2. **Download conflicting remote files** to `tmp/`
+3. **Merge by file type**:
+
+| File Type | Strategy |
+|-----------|----------|
+| `sessions/*.md` | Append-only merge: extract session blocks, deduplicate by header, combine |
+| `MEMORY.md`, `USER.md`, `projects/*.md` | Use remote as base, append local-only lines with `<!-- merged from local -->` marker |
+| `brain.db` | Copy remote as base, INSERT local-only records (by `file_path + chunk_index`), replace local |
+| Other files | Remote version wins |
+
+4. **Clean up**: `tmp/` is removed after merge
+5. **Push merged result**: Final state is pushed to pCloud, updating the SHA manifest
+
+### Three-Way SHA Detection
+
+The sync uses a three-way comparison:
+- **manifest SHA** = last synced state (from `.sync-manifest.json`)
+- **local SHA** = current local file hash
+- **remote SHA** = current pCloud file hash (via `checksumfile` API)
+
+| Manifest SHA | Local SHA | Remote SHA | Action |
+|:---:|:---:|:---:|--------|
+| A | A | A | Skip (no changes) |
+| A | A | B | Pull remote (only remote changed) |
+| A | B | A | Push local (only local changed) |
+| A | B | C | **Conflict** — merge via tmp/ |
+| — | B | — | Push (new local file) |
+| — | — | B | Pull (new remote file) |
 
 ## Error Handling
 
 | Scenario | Action |
 |----------|--------|
-| pCloud unreachable | Skip sync, log warning, retry next session |
+| pCloud unreachable | Skip sync, log warning, retry next time |
 | .env missing/invalid | Prompt user to re-run bootstrap.sh |
 | brain.db corrupt | Delete and regenerate with index-memory.py |
-| MEMORY.md conflicts | Keep both versions, merge manually |
+| Merge conflict error | Fall back to remote version, log warning |
 | Disk full | Warn user, skip brain.db update |

@@ -16,13 +16,14 @@ Build a **digital twin** — an agent that accumulates all session knowledge, us
 ```
 ~/.agent-brain/
 ├── .env                    # pCloud credentials (NEVER synced)
-├── .sync-state.json        # Sync metadata
+├── .sync-manifest.json     # SHA256 manifest for incremental sync
 ├── MEMORY.md               # Long-term persistent facts
 ├── USER.md                 # User preferences & patterns
 ├── sessions/
 │   └── YYYY-MM-DD.md       # Daily session logs (append-only)
 ├── projects/
 │   └── {project-name}.md   # Per-project accumulated context
+├── tmp/                    # Temporary directory for conflict resolution (auto-cleaned)
 └── brain.db                # SQLite FTS5 index
 ```
 
@@ -37,6 +38,7 @@ Build a **digital twin** — an agent that accumulates all session knowledge, us
 | `sessions/older` | ❌ On-demand | Search via grep or brain.db |
 | `projects/*.md` | ❌ On-demand | Load when working on that project |
 | `brain.db` | ❌ By script | SQLite FTS5 index for memory search |
+| `.sync-manifest.json` | ❌ Internal | Tracks file SHA256 hashes for incremental sync |
 
 ## Session Start Procedure
 
@@ -65,7 +67,7 @@ Activate memory flush when the user says or implies session ending:
 - **Explicit**: `save brain`, `sync memory`, `記憶同步`, `更新記憶`
 - **Implicit**: `commit`, `release note`, `告一段落`, `今天先到這`, `收工`, `結束`, `下班`, `先這樣`
 
-### Memory Flush Steps
+### Memory Flush Steps (Local Only)
 
 1. **Generate session summary** and append to `~/.agent-brain/sessions/YYYY-MM-DD.md`:
    ```markdown
@@ -109,10 +111,7 @@ Activate memory flush when the user says or implies session ending:
    python3 ~/.gemini/antigravity/skills/agent-brain/scripts/index-memory.py index
    ```
 
-6. **Sync to pCloud**:
-   ```bash
-   bash ~/.gemini/antigravity/skills/agent-brain/scripts/sync.sh push
-   ```
+> **Note**: Session end does NOT automatically sync to pCloud. Use `/sync-brain` to push changes to the cloud.
 
 ## Memory Recall Procedure
 
@@ -133,18 +132,36 @@ When user asks about past work, decisions, or history:
 - **Credentials**: `~/.agent-brain/.env`
 - Refer to the `pcloud` skill for API details if needed
 
-### Sync commands
+### Incremental Sync
+
+The sync system uses a **SHA256 manifest** (`.sync-manifest.json`) to track which files have been synced. Only files whose content has changed since the last sync are transferred.
+
+### Sync Commands
 
 ```bash
-# Push local changes to pCloud
+# Push local changes to pCloud (incremental — only changed files)
 bash ~/.gemini/antigravity/skills/agent-brain/scripts/sync.sh push
 
-# Pull from pCloud (new device bootstrap)
+# Pull from pCloud (incremental — only changed files)
 bash ~/.gemini/antigravity/skills/agent-brain/scripts/sync.sh pull
 
-# Bidirectional sync (pull then push)
+# Bidirectional sync with conflict resolution
 bash ~/.gemini/antigravity/skills/agent-brain/scripts/sync.sh sync
 ```
+
+### Conflict Resolution
+
+When both local and remote versions of a file have changed since the last sync:
+
+1. A `~/.agent-brain/tmp/` directory is created for staging
+2. Remote files are downloaded to `tmp/`
+3. Files are merged by type:
+   - **Session logs** (`sessions/*.md`): Append-only merge — deduplicate session blocks
+   - **General Markdown** (`MEMORY.md`, `USER.md`, `projects/*.md`): Remote as base, local-only lines appended
+   - **brain.db**: Local records are migrated into the remote db, then replaces local
+   - **Other files**: Remote version wins
+4. `tmp/` is cleaned up after merge
+5. Final merged result is pushed to pCloud
 
 ## Memory Hygiene Rules
 
@@ -156,12 +173,13 @@ bash ~/.gemini/antigravity/skills/agent-brain/scripts/sync.sh sync
 
 ## Workflows
 
-Agent Brain ships with two global workflows that can be installed to `~/.agent/workflows/` during bootstrap (or manually via `install-workflows.sh`):
+Agent Brain ships with three global workflows that can be installed to `~/.agent/workflows/` during bootstrap (or manually via `install-workflows.sh`):
 
 | Workflow | Slash Command | Purpose |
 |----------|---------------|---------|
-| `save-brain` | `/save-brain` | Flush session memory → update MEMORY/USER/projects → build index → push to pCloud |
-| `load-brain` | `/load-brain` | Pull latest from pCloud → load MEMORY.md, USER.md, today/yesterday sessions → load project context |
+| `save-brain` | `/save-brain` | Flush session memory → update MEMORY/USER/projects → build index (local only) |
+| `sync-brain` | `/sync-brain` | Bidirectional pCloud sync with SHA-based incremental transfer and conflict resolution |
+| `load-brain` | `/load-brain` | Load MEMORY.md, USER.md, today/yesterday sessions → load project context (local only) |
 
 ### Installing Workflows
 

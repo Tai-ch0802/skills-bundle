@@ -1,8 +1,8 @@
 ---
-description: Flush current session memory to agent-brain and sync to pCloud
+description: Flush current session memory to agent-brain (local save only)
 ---
 
-This workflow force-triggers the agent-brain session end procedure.
+This workflow force-triggers the agent-brain session end procedure. It saves memory locally without syncing to pCloud — use `/sync-brain` to sync to the cloud.
 
 // turbo-all
 
@@ -14,8 +14,4 @@ This workflow force-triggers the agent-brain session end procedure.
    ```bash
    python3 ~/.gemini/antigravity/skills/agent-brain/scripts/index-memory.py index
    ```
-6. Sync data to pCloud:
-   ```bash
-   bash ~/.gemini/antigravity/skills/agent-brain/scripts/sync.sh push
-   ```
-7. Use notify_user to inform the user: "✅ Memory saved and synced to pCloud!"
+6. Use notify_user to inform the user: "✅ Memory saved locally! Use `/sync-brain` to sync to pCloud."

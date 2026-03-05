@@ -19,6 +19,7 @@ echo ""
 echo "📁 Creating directory structure..."
 mkdir -p "${BRAIN_DIR}/sessions"
 mkdir -p "${BRAIN_DIR}/projects"
+mkdir -p "${BRAIN_DIR}/tmp"
 echo "   Created ${BRAIN_DIR}/"
 
 # 2. Handle pCloud authentication
@@ -104,9 +105,9 @@ EOF
 fi
 
 # 3. Initialize sync state
-SYNC_STATE="${BRAIN_DIR}/.sync-state.json"
-if [[ ! -f "${SYNC_STATE}" ]]; then
-  echo '{"last_sync": null, "files": {}}' > "${SYNC_STATE}"
+SYNC_MANIFEST="${BRAIN_DIR}/.sync-manifest.json"
+if [[ ! -f "${SYNC_MANIFEST}" ]]; then
+  echo '{"files": {}}' > "${SYNC_MANIFEST}"
 fi
 
 # 4. Initialize memory files if they don't exist
@@ -186,18 +187,19 @@ fi
 
 # 7. Offer to install global workflows
 echo ""
-echo "📋 Agent Brain 附帶全域 workflows，可搭配 AI 代理使用："
-echo "   • /save-brain — 沖刷 session 記憶並同步至 pCloud"
-echo "   • /load-brain — 載入跨 session 記憶至當前上下文"
+echo "📋 Agent Brain includes global workflows for your AI agent:"
+echo "   • /save-brain — Flush session memory (local only)"
+echo "   • /sync-brain — Sync memory to/from pCloud (incremental)"
+echo "   • /load-brain — Load cross-session memory into context"
 echo ""
-read -r -p "   是否安裝 workflows 至 ~/.agent/workflows/？[Y/n] " INSTALL_WF
+read -r -p "   Install workflows to ~/.agent/workflows/? [Y/n] " INSTALL_WF
 INSTALL_WF="${INSTALL_WF:-Y}"
 
 if [[ "${INSTALL_WF}" =~ ^[Yy]$ ]]; then
   bash "${SKILL_DIR}/scripts/install-workflows.sh"
 else
   echo ""
-  echo "   ⏭️  已跳過。您可以稍後執行以下指令安裝："
+  echo "   ⏭️  Skipped. You can install later with:"
   echo "   bash ${SKILL_DIR}/scripts/install-workflows.sh"
   echo ""
 fi
