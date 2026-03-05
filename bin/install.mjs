@@ -228,7 +228,7 @@ const DEPENDENCIES = {
   'documentation-templates': [],
   'game-development': [],
   'gemini-api-dev': [],
-  'gemini-interactions-api': [],
+  'gemini-interactions-api': ['gemini-api-dev'],
   'gemini-live-api-dev': [],
   'i18n-localization': [],
   'intelligent-routing': [],
