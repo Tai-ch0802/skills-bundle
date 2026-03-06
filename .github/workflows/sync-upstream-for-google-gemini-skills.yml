@@ -234,59 +234,7 @@ jobs:
           echo "✅ Jules session created: ${SESSION_NAME}"
           echo "🔗 Session URL: ${SESSION_URL}"
 
-          # --- Poll session state ---
+          # --- Fire and forget ---
           echo ""
-          echo "⏳ Waiting for Jules to complete..."
-          MAX_WAIT=1800  # 30 minutes
-          INTERVAL=30
-          ELAPSED=0
-
-          while [ $ELAPSED -lt $MAX_WAIT ]; do
-            sleep $INTERVAL
-            ELAPSED=$((ELAPSED + INTERVAL))
-
-            STATE_RESPONSE=$(curl -s \
-              -H "x-goog-api-key: ${JULES_API_KEY}" \
-              "${JULES_BASE}/${SESSION_NAME}")
-
-            STATE=$(echo "$STATE_RESPONSE" | python3 -c 'import sys,json; print(json.loads(sys.stdin.read()).get("state","UNKNOWN"))')
-
-            echo "  [${ELAPSED}s] State: ${STATE}"
-
-            case "$STATE" in
-              COMPLETED)
-                echo ""
-                echo "🎉 Jules session completed successfully!"
-                # Extract PR URL if available
-                PR_URL=$(echo "$STATE_RESPONSE" | python3 -c '
-          import sys, json
-          data = json.loads(sys.stdin.read())
-          outputs = data.get("outputs", {})
-          prs = outputs.get("pullRequests", [])
-          if prs:
-              print(prs[0].get("url", "N/A"))
-          else:
-              print("No PR created")
-          ' 2>/dev/null || echo "N/A")
-                echo "📝 Pull Request: ${PR_URL}"
-                exit 0
-                ;;
-              FAILED)
-                echo ""
-                echo "❌ Jules session failed."
-                echo "$STATE_RESPONSE" | python3 -c 'import sys,json; print(json.dumps(json.loads(sys.stdin.read()), indent=2))' 2>/dev/null || echo "$STATE_RESPONSE"
-                exit 1
-                ;;
-              QUEUED|PLANNING|IN_PROGRESS|AWAITING_PLAN_APPROVAL|AWAITING_USER_FEEDBACK|PAUSED)
-                # Still processing, continue polling
-                ;;
-              *)
-                echo "⚠️  Unknown state: ${STATE}"
-                ;;
-            esac
-          done
-
-          echo ""
-          echo "⏰ Timeout: Jules session did not complete within ${MAX_WAIT}s."
-          echo "🔗 Check manually: ${SESSION_URL}"
-          exit 1
+          echo "🚀 Fire-and-forget: Jules is processing the request asynchronously."
+          exit 0
