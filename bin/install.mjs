@@ -41,6 +41,9 @@ const LANGUAGES = {
         'mobile-fullstack': '📱 - Mobile Full-Stack',
         'security-expert': '🛡️ - Security Expert',
         architect: '🏗️ - Architect',
+        'ai-builder': '🤖 - AI & API Builder',
+        'content-creator': '✍️ - Content & Docs Creator',
+        'devops-infra': '⚙️ - DevOps & Infrastructure',
         'sdd-pack': '📝 - Spec-Driven Development',
         custom: '🎯 - Custom Selection...',
       },
@@ -134,6 +137,9 @@ const LANGUAGES = {
         'mobile-fullstack': '📱 - 行動端全端開發',
         'security-expert': '🛡️ - 安全專家',
         architect: '🏗️ - 架構師',
+        'ai-builder': '🤖 - AI 與 API 建構師',
+        'content-creator': '✍️ - 內容與文件創建',
+        'devops-infra': '⚙️ - DevOps 與基礎設施',
         'sdd-pack': '📝 - 規格驅動開發',
         custom: '🎯 - 自訂選擇...',
       },
@@ -377,6 +383,7 @@ const SKILL_PRESETS = {
       'api-patterns', 'database-design', 'nodejs-best-practices',
       'testing-mastery', 'deployment-procedures', 'seo-fundamentals',
       'code-quality', 'lint-and-validate',
+      'web-design-guidelines', 'documentation-templates', 'systematic-debugging',
     ],
   },
   'mobile-fullstack': {
@@ -384,21 +391,46 @@ const SKILL_PRESETS = {
       'mobile-design', 'api-patterns', 'database-design',
       'testing-mastery', 'deployment-procedures', 'code-quality',
       'lint-and-validate', 'performance-profiling',
+      'systematic-debugging', 'documentation-templates',
     ],
   },
   'security-expert': {
     skills: [
       'vulnerability-scanner', 'red-team-tactics', 'code-quality',
+      'systematic-debugging', 'server-management', 'bash-linux',
     ],
   },
   architect: {
     skills: [
       'architecture', 'api-patterns', 'database-design',
       'plan-writing', 'code-quality', 'performance-profiling',
+      'deployment-procedures', 'documentation-templates', 'systematic-debugging',
+    ],
+  },
+  'ai-builder': {
+    skills: [
+      'claude-api', 'gemini-api-dev', 'mcp-builder',
+      'app-builder', 'api-patterns', 'plan-writing',
+      'testing-mastery', 'code-quality',
+    ],
+  },
+  'content-creator': {
+    skills: [
+      'docx', 'pdf', 'pptx', 'xlsx',
+      'frontend-design', 'canvas-design', 'brand-guidelines',
+      'theme-factory', 'doc-coauthoring', 'humanizer',
+      'internal-comms', 'skill-creator',
+    ],
+  },
+  'devops-infra': {
+    skills: [
+      'bash-linux', 'server-management', 'deployment-procedures',
+      'performance-profiling', 'systematic-debugging',
+      'lint-and-validate', 'powershell-windows',
     ],
   },
   'sdd-pack': {
-    skills: ['sdd', 'refactoring'],
+    skills: ['sdd', 'refactoring', 'plan-writing', 'documentation-templates'],
   },
 };
 

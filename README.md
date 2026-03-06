@@ -153,6 +153,122 @@ graph TD
 
 > ⚡ **Remote Download Architecture**: Skills marked with ⚡ are **not stored locally** in this repo. They are downloaded from their upstream GitHub repos at install time using the interactive installer. Only original skills, composite skills, ClawHub skills, and zh-TW translations are stored in this repo.
 
+## Role-Based Presets
+
+The installer includes 8 curated presets. Selecting a preset pre-checks the listed skills (you can still add or remove before installing). Dependencies are auto-resolved.
+
+### 🌐 Full-Stack Web Development (14 skills)
+
+| Skill | Description |
+|-------|-------------|
+| frontend-design | Production-grade frontend interfaces — creative, polished UI |
+| tailwind-patterns | Tailwind CSS v4 — CSS-first config, container queries, design tokens |
+| nextjs-react-expert | React/Next.js performance optimization |
+| api-patterns | API design — REST vs GraphQL vs tRPC, versioning |
+| database-design | Schema design, indexing, ORM selection |
+| nodejs-best-practices | Node.js development patterns |
+| testing-mastery | Unified testing — TDD, unit/integration, E2E/Playwright |
+| deployment-procedures | Production deployment workflows & rollback |
+| seo-fundamentals | SEO fundamentals — E-E-A-T, Core Web Vitals |
+| code-quality | Coding standards & code review guidelines |
+| lint-and-validate | Linting & static analysis |
+| web-design-guidelines | UI code review for Web compliance |
+| documentation-templates | README, API docs, code comments |
+| systematic-debugging | 4-phase systematic debugging with root cause analysis |
+
+### 📱 Mobile Full-Stack (10 skills)
+
+| Skill | Description |
+|-------|-------------|
+| mobile-design | Mobile-first design for iOS/Android |
+| api-patterns | API design principles |
+| database-design | Schema design, indexing, ORM selection |
+| testing-mastery | Unified testing — TDD, unit/integration, E2E |
+| deployment-procedures | Production deployment workflows |
+| code-quality | Coding standards & code review |
+| lint-and-validate | Linting & static analysis |
+| performance-profiling | Performance measurement & analysis |
+| systematic-debugging | 4-phase systematic debugging |
+| documentation-templates | README, API docs, code comments |
+
+### 🛡️ Security Expert (6 skills)
+
+| Skill | Description |
+|-------|-------------|
+| vulnerability-scanner | Vulnerability analysis — OWASP 2025, supply chain security |
+| red-team-tactics | Red team tactics based on MITRE ATT&CK |
+| code-quality | Coding standards & code review |
+| systematic-debugging | 4-phase systematic debugging |
+| server-management | Server management & scaling |
+| bash-linux | Bash/Linux terminal patterns |
+
+### 🏗️ Architect (9 skills)
+
+| Skill | Description |
+|-------|-------------|
+| architecture | Architectural decision-making with ADR |
+| api-patterns | API design principles |
+| database-design | Schema design, indexing, ORM selection |
+| plan-writing | Structured task planning |
+| code-quality | Coding standards & code review |
+| performance-profiling | Performance measurement & analysis |
+| deployment-procedures | Production deployment workflows |
+| documentation-templates | README, API docs, code comments |
+| systematic-debugging | 4-phase systematic debugging |
+
+### 🤖 AI & API Builder (8 skills)
+
+| Skill | Description |
+|-------|-------------|
+| claude-api | Build apps with Claude API / Anthropic SDK / Agent SDK |
+| gemini-api-dev | Gemini API development — SDK, multimodal, function calling |
+| mcp-builder | MCP server building — FastMCP (Python) and MCP SDK (Node/TS) |
+| app-builder | Full-stack app building orchestrator |
+| api-patterns | API design principles |
+| plan-writing | Structured task planning |
+| testing-mastery | Unified testing — TDD, unit/integration, E2E |
+| code-quality | Coding standards & code review |
+
+### ✍️ Content & Docs Creator (12 skills)
+
+| Skill | Description |
+|-------|-------------|
+| docx | Create, read, edit Word documents (.docx) |
+| pdf | PDF manipulation — read, merge, split, fill forms, OCR |
+| pptx | PowerPoint manipulation — create, read, edit presentations |
+| xlsx | Spreadsheet manipulation — read, write, format .xlsx/.csv |
+| frontend-design | Production-grade frontend interfaces |
+| canvas-design | Visual art creation in .png/.pdf — posters, designs |
+| brand-guidelines | Apply Anthropic brand colors and typography |
+| theme-factory | Apply visual themes to slides, docs, reports (10 presets) |
+| doc-coauthoring | Structured co-authoring for docs and specs |
+| humanizer | Remove AI writing patterns |
+| internal-comms | Internal communications — status reports, newsletters |
+| skill-creator | Create, improve, and evaluate AI skills |
+
+### ⚙️ DevOps & Infrastructure (7 skills)
+
+| Skill | Description |
+|-------|-------------|
+| bash-linux | Bash/Linux terminal patterns |
+| server-management | Server management & scaling |
+| deployment-procedures | Production deployment workflows |
+| performance-profiling | Performance measurement & analysis |
+| systematic-debugging | 4-phase systematic debugging |
+| lint-and-validate | Linting & static analysis |
+| powershell-windows | PowerShell Windows patterns |
+
+### 📝 Spec-Driven Development (4 skills)
+
+| Skill | Description |
+|-------|-------------|
+| sdd | Spec-Driven Development workflow (auto-includes prd, sa) |
+| refactoring | Code smell identification and refactoring techniques |
+| plan-writing | Structured task planning |
+| documentation-templates | README, API docs, code comments |
+
+> **Note**: Dependencies are auto-resolved. For example, selecting `sdd` will auto-include `prd` and `sa`; selecting `refactoring` will auto-include `code-quality`.
+
 ## Installation
 
 ### Interactive Installer (Recommended)
@@ -163,7 +279,7 @@ npx github:Tai-ch0802/skills-bundle
 
 The installer guides you through:
 1. 🌐 **Language** — English or 繁體中文
-2. 🎯 **Preset** — Full-Stack Web, Mobile, Security Expert, Architect, SDD, or Custom
+2. 🎯 **Preset** — Full-Stack Web, Mobile, Security, Architect, AI Builder, Content Creator, DevOps, SDD, or Custom
 3. 📦 **Skills** — Fine-tune selection (preset pre-checks relevant skills)
 4. 📂 **Scope** — Project directory or global (`~/.gemini/antigravity/skills/`)
 5. 📁 **Path** — Preset paths for popular AI agents or custom path
