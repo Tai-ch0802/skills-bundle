@@ -68,6 +68,7 @@ const LANGUAGES = {
         'gemini-api-dev': 'Gemini API development — SDK usage, multimodal, function calling, structured output',
         'gemini-interactions-api': 'Gemini Interactions API — agentic applications, server-side state, tool orchestration, deep research',
         'gemini-live-api-dev': 'Gemini Live API development — real-time audio/video streaming, WebSockets, native audio',
+        'vertex-ai-api-dev': 'Guides the usage of Gemini API on Google Cloud Vertex AI with the Gen AI SDK. Use when the user asks about using Gemini in an enterprise environment or explicitly mentions Vertex AI. Covers SDK usage (Python, JS/TS, Go, Java, C#), capabilities like Live API, tools, multimedia generation, caching, and batch prediction.',
         'geo-fundamentals': 'Generative Engine Optimization for AI search engines',
         humanizer: 'Remove AI writing patterns — inflated symbolism, AI vocabulary, em dash overuse, vague attributions',
         'i18n-localization': 'Internationalization — translations, locale files, RTL support',
@@ -164,6 +165,7 @@ const LANGUAGES = {
         'gemini-api-dev': 'Gemini API 開發 — SDK 使用、多模態、函式呼叫、結構化輸出',
         'gemini-interactions-api': 'Gemini Interactions API — 代理應用程式、伺服器端狀態、工具協調、深度研究',
         'gemini-live-api-dev': 'Gemini Live API 開發 — 即時音訊/視訊串流、WebSockets、原生音訊',
+        'vertex-ai-api-dev': 'Google Cloud Vertex AI 上 Gemini API 使用指南 — 涵蓋 Gen AI SDK（Python, JS/TS, Go, Java, C#）、Live API、工具呼叫、多模態生成、快取與批次預測',
         'geo-fundamentals': '生成式引擎最佳化（GEO），針對 AI 搜尋引擎',
         humanizer: '移除 AI 寫作模式 — 膨脹象徵主義、AI 詞彙、破折號濫用、模糊歸因',
         'i18n-localization': '國際化 — 翻譯管理、本地化檔案、RTL 支援',
@@ -225,7 +227,7 @@ const SKILLS = [
   'performance-profiling', 'plan-writing', 'powershell-windows', 'python-patterns',
   'red-team-tactics', 'rust-pro', 'seo-fundamentals', 'server-management',
   'skill-vetter', 'systematic-debugging', 'tailwind-patterns', 'testing-mastery',
-  'vulnerability-scanner', 'web-design-guidelines',
+  'vertex-ai-api-dev', 'vulnerability-scanner', 'web-design-guidelines',
   // Anthropic Official Skills (alphabetical)
   'algorithmic-art', 'brand-guidelines', 'canvas-design', 'claude-api',
   'doc-coauthoring', 'docx', 'frontend-design', 'internal-comms',
@@ -292,6 +294,7 @@ const REMOTE_SKILLS = {
   'gemini-api-dev': { repo: 'google-gemini/gemini-skills', path: 'skills/gemini-api-dev', branch: 'main' },
   'gemini-interactions-api': { repo: 'google-gemini/gemini-skills', path: 'skills/gemini-interactions-api', branch: 'main' },
   'gemini-live-api-dev': { repo: 'google-gemini/gemini-skills', path: 'skills/gemini-live-api-dev', branch: 'main' },
+  'vertex-ai-api-dev': { repo: 'google-gemini/gemini-skills', path: 'skills/vertex-ai-api-dev', branch: 'main' },
 };
 
 const DEPENDENCIES = {
@@ -339,6 +342,7 @@ const DEPENDENCIES = {
   humanizer: [],
   'gemini-interactions-api': ['gemini-api-dev'],
   'gemini-live-api-dev': [],
+  'vertex-ai-api-dev': [],
   'i18n-localization': [],
   'intelligent-routing': [],
   'nextjs-react-expert': [],
