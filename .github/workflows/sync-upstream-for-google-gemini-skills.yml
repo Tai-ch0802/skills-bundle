@@ -112,7 +112,7 @@ jobs:
           set -euo pipefail
 
           JULES_BASE="https://jules.googleapis.com/v1alpha"
-          SOURCE_NAME="sources/github-Tai-ch0802-skills-bundle"
+          SOURCE_NAME="sources/github/Tai-ch0802/skills-bundle"
 
           # --- Build the prompt ---
           PROMPT=$(cat <<'PROMPT_EOF'
