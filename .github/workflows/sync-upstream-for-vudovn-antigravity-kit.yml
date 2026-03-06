@@ -15,8 +15,7 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      pull-requests: write
+      contents: read
 
     steps:
       # ----------------------------------------------------------------
@@ -102,91 +101,144 @@ jobs:
           SUMMARY_EOF
 
       # ----------------------------------------------------------------
-      # Phase 2: Invoke Jules to sync (only if changes detected)
+      # Phase 2: Invoke Jules via REST API (only if changes detected)
       # ----------------------------------------------------------------
       - name: 🤖 Invoke Jules to sync upstream changes
         if: steps.detect.outputs.has_changes == 'true'
-        uses: google-labs-code/jules-action@v1.0.0
-        with:
-          jules_api_key: ${{ secrets.JULES_API_KEY }}
-          prompt: |
-            # Task: Sync Upstream Skill Changes (Metadata & Translations Only)
+        env:
+          JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
+          CHANGE_SUMMARY: ${{ steps.detect.outputs.change_summary }}
+        run: |
+          set -euo pipefail
 
-            You are a skill synchronization agent for the `skills-bundle` project.
-            The upstream repository `https://github.com/vudovn/antigravity-kit` has had
-            changes in the past 24 hours. Your job is to sync metadata and translations.
+          JULES_BASE="https://jules.googleapis.com/v1alpha"
+          SOURCE_NAME="sources/github/Tai-ch0802/skills-bundle"
 
-            ## ⚠️ IMPORTANT: Remote Download Architecture
+          # --- Build the prompt ---
+          PROMPT=$(cat <<'PROMPT_EOF'
+          # Task: Sync Upstream Skill Changes (Metadata & Translations Only)
 
-            This project uses a **runtime download architecture**. Skills from upstream
-            repos are NOT stored locally — they are downloaded at install time via
-            `REMOTE_SKILLS` in `bin/install.mjs`. Therefore:
+          You are a skill synchronization agent for the `skills-bundle` project.
+          The upstream repository `https://github.com/vudovn/antigravity-kit` has had
+          changes in the past 24 hours. Your job is to sync metadata and translations.
 
-            - Do **NOT** create or modify any root-level skill directories
-            - Do **NOT** copy upstream skill files into the repo
-            - Only update **installer metadata** and **zh-TW translations**
+          ## ⚠️ IMPORTANT: Remote Download Architecture
 
-            ## Upstream Changes Detected
+          This project uses a **runtime download architecture**. Skills from upstream
+          repos are NOT stored locally — they are downloaded at install time via
+          `REMOTE_SKILLS` in `bin/install.mjs`. Therefore:
 
-            ${{ steps.detect.outputs.change_summary }}
+          - Do **NOT** create or modify any root-level skill directories
+          - Do **NOT** copy upstream skill files into the repo
+          - Only update **installer metadata** and **zh-TW translations**
 
-            ## Skills from this upstream (antigravity-kit)
+          ## Upstream Changes Detected
 
-            api-patterns, app-builder, architecture, bash-linux, behavioral-modes,
-            brainstorming, database-design, deployment-procedures, documentation-templates,
-            game-development, geo-fundamentals, i18n-localization, intelligent-routing,
-            lint-and-validate, mobile-design, nextjs-react-expert,
-            nodejs-best-practices, parallel-agents, performance-profiling, plan-writing,
-            powershell-windows, python-patterns, red-team-tactics, rust-pro,
-            seo-fundamentals, server-management, systematic-debugging, tailwind-patterns,
-            vulnerability-scanner, web-design-guidelines
+          PROMPT_EOF
+          )
+          PROMPT+="${CHANGE_SUMMARY}"
+          PROMPT+=$(cat <<'PROMPT_EOF'
 
-            ## Instructions
+          ## Skills from this upstream (antigravity-kit)
 
-            ### Step 1: Identify what changed upstream
+          api-patterns, app-builder, architecture, bash-linux, behavioral-modes,
+          brainstorming, database-design, deployment-procedures, documentation-templates,
+          game-development, geo-fundamentals, i18n-localization, intelligent-routing,
+          lint-and-validate, mobile-design, nextjs-react-expert,
+          nodejs-best-practices, parallel-agents, performance-profiling, plan-writing,
+          powershell-windows, python-patterns, red-team-tactics, rust-pro,
+          seo-fundamentals, server-management, systematic-debugging, tailwind-patterns,
+          vulnerability-scanner, web-design-guidelines
 
-            Clone or fetch `https://github.com/vudovn/antigravity-kit` and review the
-            changes. Focus on SKILL.md files in the skill directories listed above.
+          ## Instructions
 
-            ### Step 2: Update installer metadata (if needed)
+          ### Step 1: Identify what changed upstream
 
-            If any skill's SKILL.md description or name changed, update the corresponding
-            entries in `bin/install.mjs`:
-            - `LANGUAGES.en.messages.skillDescriptions` (English description)
-            - `LANGUAGES['zh-TW'].messages.skillDescriptions` (Traditional Chinese description)
+          Clone or fetch `https://github.com/vudovn/antigravity-kit` and review the
+          changes. Focus on SKILL.md files in the skill directories listed above.
 
-            If upstream added a NEW skill directory:
-            1. Add it to the `SKILLS` array (alphabetical order in Antigravity Kit section)
-            2. Add to `DEPENDENCIES` (empty array if no dependencies)
-            3. Add English + zh-TW descriptions
-            4. Add to `REMOTE_SKILLS` with: `{ repo: 'vudovn/antigravity-kit', path: '<name>', branch: 'main' }`
+          ### Step 2: Update installer metadata (if needed)
 
-            If upstream deleted a skill, remove it from `SKILLS`, `DEPENDENCIES`,
-            `REMOTE_SKILLS`, and both language descriptions.
+          If any skill's SKILL.md description or name changed, update the corresponding
+          entries in `bin/install.mjs`:
+          - `LANGUAGES.en.messages.skillDescriptions` (English description)
+          - `LANGUAGES['zh-TW'].messages.skillDescriptions` (Traditional Chinese description)
 
-            ### Step 3: Update zh-TW translations
+          If upstream added a NEW skill directory:
+          1. Add it to the `SKILLS` array (alphabetical order in Antigravity Kit section)
+          2. Add to `DEPENDENCIES` (empty array if no dependencies)
+          3. Add English + zh-TW descriptions
+          4. Add to `REMOTE_SKILLS` with: `{ repo: 'vudovn/antigravity-kit', path: '<name>', branch: 'main' }`
 
-            For each modified or new skill, update the corresponding file under
-            `i18n/zh-TW/<skill-name>/`. Translate the SKILL.md and any reference files
-            to Traditional Chinese. Keep the same file structure.
+          If upstream deleted a skill, remove it from `SKILLS`, `DEPENDENCIES`,
+          `REMOTE_SKILLS`, and both language descriptions.
 
-            ### Step 4: Handle composite skills
+          ### Step 3: Update zh-TW translations
 
-            If changes affect upstream skills that feed into composite skills:
-            - `tdd-workflow` changes → update `testing-mastery/references/tdd-cycle.md`
-            - `testing-patterns` changes → update `testing-mastery/references/unit-integration.md`
-            - `clean-code` or `code-review-checklist` changes → update `code-quality/SKILL.md`
+          For each modified or new skill, update the corresponding file under
+          `i18n/zh-TW/<skill-name>/`. Translate the SKILL.md and any reference files
+          to Traditional Chinese. Keep the same file structure.
 
-            Don't forget to update the zh-TW versions of composite skills too.
+          ### Step 4: Handle composite skills
 
-            ### Step 5: Create PR
+          If changes affect upstream skills that feed into composite skills:
+          - `tdd-workflow` changes → update `testing-mastery/references/tdd-cycle.md`
+          - `testing-patterns` changes → update `testing-mastery/references/unit-integration.md`
+          - `clean-code` or `code-review-checklist` changes → update `code-quality/SKILL.md`
 
-            Create a pull request with:
-            - **Title**: `sync: update skills from upstream antigravity-kit`
-            - **Body**: Include a clear summary of changes
+          Don't forget to update the zh-TW versions of composite skills too.
 
-            ## Rules
+          ### Step 5: Create PR
 
-            - Do NOT create root-level skill directories (they are remote-downloaded)
-            - Do NOT modify skills not from this upstream
-            - ONLY create a PR if there are actual changes to sync
+          Create a pull request with:
+          - **Title**: `sync: update skills from upstream antigravity-kit`
+          - **Body**: Include a clear summary of changes
+
+          ## Rules
+
+          - Do NOT create root-level skill directories (they are remote-downloaded)
+          - Do NOT modify skills not from this upstream
+          - ONLY create a PR if there are actual changes to sync
+          PROMPT_EOF
+          )
+
+          # --- Escape prompt for JSON ---
+          PROMPT_JSON=$(echo "$PROMPT" | python3 -c 'import sys,json; print(json.dumps(sys.stdin.read()))')
+
+          # --- Create Jules session ---
+          echo "🚀 Creating Jules session..."
+          CREATE_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            -H "x-goog-api-key: ${JULES_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"prompt\": ${PROMPT_JSON},
+              \"title\": \"sync: update skills from upstream antigravity-kit\",
+              \"sourceContext\": {
+                \"source\": \"${SOURCE_NAME}\",
+                \"githubRepoContext\": {
+                  \"startingBranch\": \"main\"
+                }
+              },
+              \"automationMode\": \"AUTO_CREATE_PR\"
+            }" \
+            "${JULES_BASE}/sessions")
+
+          HTTP_CODE=$(echo "$CREATE_RESPONSE" | tail -1)
+          RESPONSE_BODY=$(echo "$CREATE_RESPONSE" | sed '$d')
+
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
+            echo "❌ Failed to create Jules session (HTTP ${HTTP_CODE}):"
+            echo "$RESPONSE_BODY"
+            exit 1
+          fi
+
+          SESSION_NAME=$(echo "$RESPONSE_BODY" | python3 -c 'import sys,json; print(json.loads(sys.stdin.read())["name"])')
+          SESSION_URL=$(echo "$RESPONSE_BODY" | python3 -c 'import sys,json; print(json.loads(sys.stdin.read()).get("url","N/A"))')
+
+          echo "✅ Jules session created: ${SESSION_NAME}"
+          echo "🔗 Session URL: ${SESSION_URL}"
+
+          # --- Fire and forget ---
+          echo ""
+          echo "🚀 Fire-and-forget: Jules is processing the request asynchronously."
+          exit 0

@@ -2,211 +2,246 @@ name: "🔄 Sync Upstream Skills - ClawHub"
 
 on:
   schedule:
-    # 00:00 UTC+8 = 16:00 UTC (previous day)
-    - cron: "0 16 * * *"
+    # 01:00 UTC+8 = 17:00 UTC (previous day)
+    - cron: "0 17 * * *"
   workflow_dispatch:
+    inputs:
+      hours_lookback:
+        description: "Hours to look back for changes (default: 24)"
+        required: false
+        default: "24"
 
 jobs:
   sync:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      pull-requests: write
+      contents: read
 
     steps:
       # ----------------------------------------------------------------
-      # Phase 1: Detect upstream changes via ClawHub API
+      # Phase 1: Detect upstream changes
       # ----------------------------------------------------------------
-      - name: 📥 Checkout repository
-        uses: actions/checkout@v4
-
       - name: 🔍 Detect upstream changes
         id: detect
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LOOKBACK_HOURS: ${{ inputs.hours_lookback || '24' }}
         run: |
           set -euo pipefail
 
-          CLAWHUB_API_BASE="https://wry-manatee-359.convex.site/api/v1/skills"
+          # ClawHub sources are multiple repos
+          SOURCES=("biostartechnology/clawhub" "spclaudehome/Clawhub")
+          SINCE_DATE=$(date -u -d "${LOOKBACK_HOURS} hours ago" '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null \
+                    || date -u -v-${LOOKBACK_HOURS}H '+%Y-%m-%dT%H:%M:%SZ')
 
-          # --- Define ClawHub skills to monitor ---
-          CLAWHUB_SKILLS=("humanizer" "skill-vetter")
-          UPDATED_SKILLS=()
+          echo "📅 Checking ClawHub sources for changes since ${SINCE_DATE}"
+          
           CHANGE_SUMMARY=""
+          HAS_CHANGES=false
+          ALL_COMMITS=""
+          ALL_MERGED_PRS=""
+          ALL_CHANGED_FILES=""
 
-          echo "📅 Checking ClawHub skills for updates"
-          echo ""
+          for UPSTREAM_REPO in "${SOURCES[@]}"; do
+            echo "--- Checking ${UPSTREAM_REPO} ---"
+            
+            # --- Collect recent commits ---
+            COMMITS=$(gh api "repos/${UPSTREAM_REPO}/commits?since=${SINCE_DATE}&per_page=100" \
+              --jq '.[] | "- [\(.sha[0:7])](https://github.com/'"${UPSTREAM_REPO}"'/commit/\(.sha)) \(.commit.message | split("\n")[0]) (by @\(.author.login // .commit.author.name))"' \
+              2>&1 || echo "")
+            
+            if [ -n "${COMMITS}" ]; then
+              ALL_COMMITS+="### ${UPSTREAM_REPO} Commits:
+              ${COMMITS}
 
-          for SLUG in "${CLAWHUB_SKILLS[@]}"; do
-            echo "--- Checking ${SLUG} ---"
-
-            # Fetch current metadata from ClawHub API
-            RESPONSE=$(curl -sf "${CLAWHUB_API_BASE}/${SLUG}" 2>&1 || echo "")
-
-            if [ -z "${RESPONSE}" ]; then
-              echo "⚠️ Failed to fetch ${SLUG} from ClawHub API. Skipping."
-              continue
+              "
+              HAS_CHANGES=true
             fi
 
-            # Extract version and updatedAt from response
-            UPSTREAM_VERSION=$(echo "${RESPONSE}" | jq -r '.latestVersion.version // empty')
-            UPSTREAM_UPDATED=$(echo "${RESPONSE}" | jq -r '.skill.updatedAt // empty')
-            UPSTREAM_CHANGELOG=$(echo "${RESPONSE}" | jq -r '.latestVersion.changelog // "No changelog provided"')
+            # --- Collect merged PRs ---
+            MERGED_PRS=$(gh api "repos/${UPSTREAM_REPO}/pulls?state=closed&sort=updated&direction=desc&per_page=50" \
+              --jq '.[] | select(.merged_at != null) | select(.merged_at >= "'"${SINCE_DATE}"'") | "- PR #\(.number): \(.title) (merged by @\(.merged_by.login // "unknown"))"' \
+              2>&1 || echo "")
+            
+            if [ -n "${MERGED_PRS}" ]; then
+              ALL_MERGED_PRS+="### ${UPSTREAM_REPO} PRs:
+              ${MERGED_PRS}
 
-            if [ -z "${UPSTREAM_VERSION}" ]; then
-              echo "⚠️ Could not parse ${SLUG} upstream version. Skipping."
-              continue
+              "
+              HAS_CHANGES=true
             fi
 
-            echo "  🔄 Upstream version: ${UPSTREAM_VERSION}"
+            # --- Get list of changed files ---
+            CHANGED_FILES=$(gh api "repos/${UPSTREAM_REPO}/commits?since=${SINCE_DATE}&per_page=100" \
+              --jq '.[].sha' 2>&1 | while read -r sha; do
+                gh api "repos/${UPSTREAM_REPO}/commits/${sha}" \
+                  --jq '.files[].filename' 2>&1
+              done | sort -u || echo "")
+            
+            if [ -n "${CHANGED_FILES}" ]; then
+              ALL_CHANGED_FILES+="### ${UPSTREAM_REPO} Files:
+              ${CHANGED_FILES}
 
-            # Compare with locally tracked version
-            LOCAL_VERSION_FILE=".github/.clawhub-${SLUG}-version.txt"
-            LOCAL_VERSION=""
-            if [ -f "${LOCAL_VERSION_FILE}" ]; then
-              LOCAL_VERSION=$(head -1 "${LOCAL_VERSION_FILE}" | tr -d '[:space:]')
+              "
             fi
-
-            echo "  📦 Local version: ${LOCAL_VERSION:-'(not tracked)'}"
-
-            if [ "${UPSTREAM_VERSION}" = "${LOCAL_VERSION}" ]; then
-              echo "  ✅ No changes for ${SLUG}."
-              continue
-            fi
-
-            echo "  🔔 Version change detected: ${LOCAL_VERSION:-'(none)'} → ${UPSTREAM_VERSION}"
-            UPDATED_SKILLS+=("${SLUG}")
-
-            CHANGE_SUMMARY+="### ${SLUG}
-          **Version change:** \`${LOCAL_VERSION:-'(initial)'}\` → \`${UPSTREAM_VERSION}\`
-          **Updated at:** $(date -u -d @$((UPSTREAM_UPDATED / 1000)) '+%Y-%m-%d %H:%M:%S UTC' 2>/dev/null || echo "${UPSTREAM_UPDATED}")
-          **Changelog:** ${UPSTREAM_CHANGELOG}
-
-          "
-            echo ""
           done
 
           # --- Check if any changes found ---
-          if [ ${#UPDATED_SKILLS[@]} -eq 0 ]; then
-            echo ""
-            echo "✅ No changes detected for any ClawHub skill. Skipping sync."
+          if [ "$HAS_CHANGES" = false ]; then
+            echo "✅ No changes detected in the last ${LOOKBACK_HOURS} hours. Skipping sync."
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          UPDATED_LIST=$(IFS=','; echo "${UPDATED_SKILLS[*]}")
-          echo ""
-          echo "🔔 Updated skills: ${UPDATED_LIST}"
+          echo "🔔 Changes detected!"
+          
+          # Build change summary
+          if [ -n "${ALL_COMMITS}" ]; then
+            CHANGE_SUMMARY+="## Recent Commits (last ${LOOKBACK_HOURS}h)
+            ${ALL_COMMITS}
+            "
+          fi
+          if [ -n "${ALL_MERGED_PRS}" ]; then
+            CHANGE_SUMMARY+="## Merged PRs (last ${LOOKBACK_HOURS}h)
+            ${ALL_MERGED_PRS}
+            "
+          fi
+          if [ -n "${ALL_CHANGED_FILES}" ]; then
+            CHANGE_SUMMARY+="## Changed Files
+            ${ALL_CHANGED_FILES}
+            "
+          fi
+
           echo "has_changes=true" >> "$GITHUB_OUTPUT"
-          echo "updated_skills=${UPDATED_LIST}" >> "$GITHUB_OUTPUT"
-
-          FULL_SUMMARY="## ClawHub Skills Update
-
-          ${CHANGE_SUMMARY}"
 
           # Store multi-line summary via GITHUB_OUTPUT heredoc delimiter
           cat << 'SUMMARY_EOF' >> "$GITHUB_OUTPUT"
           change_summary<<EOF
-          ${FULL_SUMMARY}
+          ${CHANGE_SUMMARY}
           EOF
           SUMMARY_EOF
 
       # ----------------------------------------------------------------
-      # Phase 2: Invoke Jules to sync (only if changes detected)
+      # Phase 2: Invoke Jules via REST API (only if changes detected)
       # ----------------------------------------------------------------
       - name: 🤖 Invoke Jules to sync upstream changes
         if: steps.detect.outputs.has_changes == 'true'
-        uses: google-labs-code/jules-action@v1.0.0
-        with:
-          jules_api_key: ${{ secrets.JULES_API_KEY }}
-          prompt: |
-            # Task: Sync Upstream Skill Changes from ClawHub
+        env:
+          JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
+          CHANGE_SUMMARY: ${{ steps.detect.outputs.change_summary }}
+        run: |
+          set -euo pipefail
 
-            You are a skill synchronization agent for the `skills-bundle` project.
-            One or more skills on ClawHub have been updated. Your job is to sync
-            those changes into this project.
+          JULES_BASE="https://jules.googleapis.com/v1alpha"
+          SOURCE_NAME="sources/github/Tai-ch0802/skills-bundle"
 
-            ## Updated Skills
+          # --- Build the prompt ---
+          PROMPT=$(cat <<'PROMPT_EOF'
+          # Task: Sync Upstream Skill Changes from ClawHub
 
-            The following skills have updates: `${{ steps.detect.outputs.updated_skills }}`
+          You are a skill synchronization agent for the `skills-bundle` project.
+          One or more skills on ClawHub have been updated. Your job is to sync
+          the humanizer and skill-vetter skills.
 
-            ## Upstream Changes Detected
+          ## ⚠️ IMPORTANT: Remote Download Architecture
 
-            ${{ steps.detect.outputs.change_summary }}
+          This project uses a **runtime download architecture**. However, ClawHub
+          skills are currently stored LOCALLY as they are modified from the original
+          source or curated.
 
-            ## Important: Download Method
+          - Only update these specific skills: humanizer, skill-vetter
+          - Update **installer metadata** and **zh-TW translations**
 
-            Since ClawHub is NOT a Git repository, you must download skills via their API:
+          ## Upstream Changes Detected
 
-            ```bash
-            # For each updated skill:
-            SLUG="<skill-slug>"
-            curl -L -o /tmp/${SLUG}.zip "https://wry-manatee-359.convex.site/api/v1/download?slug=${SLUG}"
-            mkdir -p /tmp/${SLUG} && cd /tmp/${SLUG} && unzip -o /tmp/${SLUG}.zip
-            ```
+          PROMPT_EOF
+          )
+          PROMPT+="${CHANGE_SUMMARY}"
+          PROMPT+=$(cat <<'PROMPT_EOF'
 
-            The zip contains:
-            - `SKILL.md` — The main skill file (copy this)
-            - `README.md` — The readme (not used in our repo)
-            - `_meta.json` — Metadata (not used in our repo)
+          ## Upstream Mappings
 
-            ## Skill Registry
+          - `biostartechnology/clawhub` -> humanizer, skill-vetter
+          - `spclaudehome/Clawhub` -> humanizer
 
-            **Skills from ClawHub (may be updated):**
-            - humanizer (from @biostartechnology)
-            - skill-vetter (from @spclaudehome)
+          ## Instructions
 
-            **Skills NOT from ClawHub (do NOT modify):**
-            prd, sa, sdd, refactoring, testing-mastery, code-quality,
-            api-patterns, app-builder, architecture, bash-linux,
-            behavioral-modes, brainstorming, database-design,
-            deployment-procedures, documentation-templates, frontend-design,
-            game-development, gemini-api-dev, gemini-interactions-api,
-            gemini-live-api-dev, geo-fundamentals, i18n-localization,
-            intelligent-routing, lint-and-validate, mcp-builder, mobile-design,
-            nextjs-react-expert, nodejs-best-practices, parallel-agents,
-            performance-profiling, plan-writing, powershell-windows, python-patterns,
-            red-team-tactics, rust-pro, seo-fundamentals, server-management,
-            systematic-debugging, tailwind-patterns, vulnerability-scanner,
-            web-design-guidelines, pcloud, agent-brain
+          ### Step 1: Identify what changed upstream
 
-            ## Instructions
+          Review the changes in the ClawHub repositories and see how they affect
+          the local `humanizer/` and `skill-vetter/` skills.
 
-            ### Step 1: Download and compare
+          ### Step 2: Update local skill files
 
-            For EACH skill listed in the updated skills above:
-            1. Download the latest version from ClawHub using the API
-            2. Compare the `SKILL.md` with the current `<slug>/SKILL.md` in this repo
+          Apply any relevant code or instruction updates to:
+          - `humanizer/SKILL.md`
+          - `skill-vetter/SKILL.md`
 
-            ### Step 2: Sync changed files
+          ### Step 3: Update installer metadata (if needed)
 
-            For each skill that has actual file changes:
-            1. Copy the updated `SKILL.md` from the download to `<slug>/SKILL.md`
-            2. Update the English description in `bin/install.mjs` if the skill
-               summary changed
-            3. Update the zh-TW description in `bin/install.mjs` if needed
+          If any skill's description changed, update `bin/install.mjs`:
+          - `LANGUAGES.en.messages.skillDescriptions`
+          - `LANGUAGES['zh-TW'].messages.skillDescriptions`
 
-            ### Step 3: Update zh-TW translations
+          ### Step 4: Update zh-TW translations
 
-            For each modified skill, update `i18n/zh-TW/<slug>/SKILL.md` to reflect
-            the latest changes. Translate the updated content to Traditional Chinese.
+          For each modified skill, update the corresponding file under `i18n/zh-TW/`.
+          Translate the SKILL.md to Traditional Chinese.
 
-            ### Step 4: Update version tracking files
+          ### Step 5: Update README.md
 
-            For each synced skill, update `.github/.clawhub-<slug>-version.txt`
-            to contain the new version number.
+          If skill details significant changed, update README.md and GEMINI.md.
 
-            ### Step 5: Create PR
+          ### Step 6: Create PR
 
-            Create a single pull request with:
-            - **Title**: `sync: update ClawHub skills (${{ steps.detect.outputs.updated_skills }})`
-            - **Body**: Include a clear summary of:
-              - Which skills were updated and their version changes
-              - What changes were made to each skill's `SKILL.md`
-              - What zh-TW translations were updated
+          Create a pull request with:
+          - **Title**: `sync: update skills from ClawHub`
+          - **Body**: Include a clear summary of changes
 
-            ## Rules
+          ## Rules
 
-            - Do NOT modify skills that are NOT from ClawHub
-            - ONLY create a PR if there are actual file content changes
-            - If after comparing all files are identical, do NOT create a PR
-            - All existing tests and lint must pass
-            - Keep `bin/install.mjs` consistent with available skill directories
+          - Do NOT modify skills not from ClawHub
+          - ONLY create a PR if there are actual changes to sync
+          PROMPT_EOF
+          )
+
+          # --- Escape prompt for JSON ---
+          PROMPT_JSON=$(echo "$PROMPT" | python3 -c 'import sys,json; print(json.dumps(sys.stdin.read()))')
+
+          # --- Create Jules session ---
+          echo "🚀 Creating Jules session..."
+          CREATE_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            -H "x-goog-api-key: ${JULES_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"prompt\": ${PROMPT_JSON},
+              \"title\": \"sync: update skills from ClawHub\",
+              \"sourceContext\": {
+                \"source\": \"${SOURCE_NAME}\",
+                \"githubRepoContext\": {
+                  \"startingBranch\": \"main\"
+                }
+              },
+              \"automationMode\": \"AUTO_CREATE_PR\"
+            }" \
+            "${JULES_BASE}/sessions")
+
+          HTTP_CODE=$(echo "$CREATE_RESPONSE" | tail -1)
+          RESPONSE_BODY=$(echo "$CREATE_RESPONSE" | sed '$d')
+
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
+            echo "❌ Failed to create Jules session (HTTP ${HTTP_CODE}):"
+            echo "$RESPONSE_BODY"
+            exit 1
+          fi
+
+          SESSION_NAME=$(echo "$RESPONSE_BODY" | python3 -c 'import sys,json; print(json.loads(sys.stdin.read())["name"])')
+          SESSION_URL=$(echo "$RESPONSE_BODY" | python3 -c 'import sys,json; print(json.loads(sys.stdin.read()).get("url","N/A"))')
+
+          echo "✅ Jules session created: ${SESSION_NAME}"
+          echo "🔗 Session URL: ${SESSION_URL}"
+
+          # --- Fire and forget ---
+          echo ""
+          echo "🚀 Fire-and-forget: Jules is processing the request asynchronously."
+          exit 0

@@ -2,8 +2,8 @@ name: "🔄 Sync Upstream Skills - anthropics/skills"
 
 on:
   schedule:
-    # 00:00 UTC+8 = 16:00 UTC (previous day)
-    - cron: "0 16 * * *"
+    # 02:00 UTC+8 = 18:00 UTC (previous day)
+    - cron: "0 18 * * *"
   workflow_dispatch:
     inputs:
       hours_lookback:
@@ -15,8 +15,7 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      pull-requests: write
+      contents: read
 
     steps:
       # ----------------------------------------------------------------
@@ -102,90 +101,143 @@ jobs:
           SUMMARY_EOF
 
       # ----------------------------------------------------------------
-      # Phase 2: Invoke Jules to sync (only if changes detected)
+      # Phase 2: Invoke Jules via REST API (only if changes detected)
       # ----------------------------------------------------------------
       - name: 🤖 Invoke Jules to sync upstream changes
         if: steps.detect.outputs.has_changes == 'true'
-        uses: google-labs-code/jules-action@v1.0.0
-        with:
-          jules_api_key: ${{ secrets.JULES_API_KEY }}
-          prompt: |
-            # Task: Sync Upstream Skill Changes (Metadata & Translations Only)
+        env:
+          JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
+          CHANGE_SUMMARY: ${{ steps.detect.outputs.change_summary }}
+        run: |
+          set -euo pipefail
 
-            You are a skill synchronization agent for the `skills-bundle` project.
-            The upstream repository `https://github.com/anthropics/skills` has had
-            changes in the past 24 hours. Your job is to sync metadata and translations.
+          JULES_BASE="https://jules.googleapis.com/v1alpha"
+          SOURCE_NAME="sources/github/Tai-ch0802/skills-bundle"
 
-            ## ⚠️ IMPORTANT: Remote Download Architecture
+          # --- Build the prompt ---
+          PROMPT=$(cat <<'PROMPT_EOF'
+          # Task: Sync Upstream Skill Changes (Metadata & Translations Only)
 
-            This project uses a **runtime download architecture**. ALL skills from
-            upstream repos are downloaded at install time via `REMOTE_SKILLS` in
-            `bin/install.mjs`. Therefore:
+          You are a skill synchronization agent for the `skills-bundle` project.
+          The upstream repository `https://github.com/anthropics/skills` has had
+          changes in the past 24 hours. Your job is to sync metadata and translations.
 
-            - Do **NOT** create or modify any root-level skill directories
-            - Do **NOT** copy upstream skill files into the repo
-            - Only update **installer metadata** and **zh-TW translations**
+          ## ⚠️ IMPORTANT: Remote Download Architecture
 
-            ## Upstream Changes Detected
+          This project uses a **runtime download architecture**. ALL skills from
+          upstream repos are downloaded at install time via `REMOTE_SKILLS` in
+          `bin/install.mjs`. Therefore:
 
-            ${{ steps.detect.outputs.change_summary }}
+          - Do **NOT** create or modify any root-level skill directories
+          - Do **NOT** copy upstream skill files into the repo
+          - Only update **installer metadata** and **zh-TW translations**
 
-            ## Important: Upstream Directory Structure
+          ## Upstream Changes Detected
 
-            The upstream repo nests skills under `skills/<skill-name>/`, NOT at root level.
+          PROMPT_EOF
+          )
+          PROMPT+="${CHANGE_SUMMARY}"
+          PROMPT+=$(cat <<'PROMPT_EOF'
 
-            ## Skills from this upstream (anthropics/skills)
+          ## Important: Upstream Directory Structure
 
-            All are REMOTE (downloaded at runtime):
-            algorithmic-art, brand-guidelines, canvas-design, claude-api,
-            doc-coauthoring, docx, frontend-design, internal-comms, mcp-builder,
-            pdf, pptx, skill-creator, slack-gif-creator, theme-factory,
-            web-artifacts-builder, webapp-testing, xlsx
+          The upstream repository stores skills at the ROOT level (unlike some others).
+          Example: `internal-comms/SKILL.md`.
 
-            ## Instructions
+          ## Skills from this upstream (anthropics/skills)
 
-            ### Step 1: Identify what changed upstream
+          All are REMOTE (downloaded at runtime):
+          algorithmic-art, brand-guidelines, canvas-design, claude-api, doc-coauthoring,
+          docx, frontend-design, internal-comms, mcp-builder, pdf, pptx, skill-creator,
+          slack-gif-creator, theme-factory, web-artifacts-builder, webapp-testing, xlsx
 
-            Clone or fetch `https://github.com/anthropics/skills` and review the
-            changes. Focus on SKILL.md files under `skills/` directories.
+          ## Instructions
 
-            ### Step 2: Update installer metadata (if needed)
+          ### Step 1: Identify what changed upstream
 
-            If any skill's SKILL.md description or name changed, update the corresponding
-            entries in `bin/install.mjs`:
-            - `LANGUAGES.en.messages.skillDescriptions` (English description)
-            - `LANGUAGES['zh-TW'].messages.skillDescriptions` (Traditional Chinese description)
+          Clone or fetch `https://github.com/anthropics/skills` and review
+          the changes in the directories listed above.
 
-            If upstream added a NEW skill directory under `skills/`:
-            1. Add it to the `SKILLS` array (in the Anthropic Official Skills section)
-            2. Add to `DEPENDENCIES` (empty array if no dependencies)
-            3. Add English + zh-TW descriptions
-            4. Add to `REMOTE_SKILLS` with: `{ repo: 'anthropics/skills', path: 'skills/<name>', branch: 'main' }`
+          ### Step 2: Update installer metadata (if needed)
 
-            If upstream deleted a skill, remove it from `SKILLS`, `DEPENDENCIES`,
-            `REMOTE_SKILLS`, and both language descriptions.
+          If any skill's SKILL.md description or name changed, update the corresponding
+          entries in `bin/install.mjs`:
+          - `LANGUAGES.en.messages.skillDescriptions` (English description)
+          - `LANGUAGES['zh-TW'].messages.skillDescriptions` (Traditional Chinese description)
 
-            ### Step 3: Update zh-TW translations
+          If upstream added a NEW skill directory:
+          1. Add it to the `SKILLS` array (alphabetical order)
+          2. Add to `DEPENDENCIES` (empty array if no dependencies)
+          3. Add English + zh-TW descriptions
+          4. Add to `REMOTE_SKILLS` with: `{ repo: 'anthropics/skills', path: '<name>', branch: 'main' }`
 
-            For each modified or new skill, update the corresponding file under
-            `i18n/zh-TW/<skill-name>/`. Translate the SKILL.md to Traditional Chinese.
-            Keep the same YAML frontmatter structure.
+          If upstream deleted a skill, remove it from `SKILLS`, `DEPENDENCIES`,
+          `REMOTE_SKILLS`, and both language descriptions.
 
-            ### Step 4: Update README.md
+          ### Step 3: Update zh-TW translations
 
-            If new skills were added or existing skills removed:
-            1. Update the skill count in "Available Skills (N)"
-            2. Update the "Anthropic Official Skills" section
-            3. Update GEMINI.md if needed
+          For each modified or new skill, update the corresponding file under
+          `i18n/zh-TW/<skill-name>/`. Translate the SKILL.md to Traditional Chinese.
+          Keep the same YAML frontmatter structure.
 
-            ### Step 5: Create PR
+          ### Step 4: Update README.md
 
-            Create a pull request with:
-            - **Title**: `sync: update skills from upstream anthropics/skills`
-            - **Body**: Include a clear summary of changes
+          If new skills were added or existing skills removed:
+          1. Update the skill count
+          2. Update the Anthropic Official Skills section
+          3. Update GEMINI.md if needed
 
-            ## Rules
+          ### Step 5: Create PR
 
-            - Do NOT create root-level skill directories (ALL skills are remote-downloaded)
-            - Do NOT modify skills not from this upstream
-            - ONLY create a PR if there are actual changes to sync
+          Create a pull request with:
+          - **Title**: `sync: update skills from upstream anthropics-skills`
+          - **Body**: Include a clear summary of changes
+
+          ## Rules
+
+          - Do NOT create root-level skill directories (ALL skills are remote-downloaded)
+          - Do NOT modify skills not from this upstream
+          - ONLY create a PR if there are actual changes to sync
+          PROMPT_EOF
+          )
+
+          # --- Escape prompt for JSON ---
+          PROMPT_JSON=$(echo "$PROMPT" | python3 -c 'import sys,json; print(json.dumps(sys.stdin.read()))')
+
+          # --- Create Jules session ---
+          echo "🚀 Creating Jules session..."
+          CREATE_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            -H "x-goog-api-key: ${JULES_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"prompt\": ${PROMPT_JSON},
+              \"title\": \"sync: update skills from upstream anthropics-skills\",
+              \"sourceContext\": {
+                \"source\": \"${SOURCE_NAME}\",
+                \"githubRepoContext\": {
+                  \"startingBranch\": \"main\"
+                }
+              },
+              \"automationMode\": \"AUTO_CREATE_PR\"
+            }" \
+            "${JULES_BASE}/sessions")
+
+          HTTP_CODE=$(echo "$CREATE_RESPONSE" | tail -1)
+          RESPONSE_BODY=$(echo "$CREATE_RESPONSE" | sed '$d')
+
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
+            echo "❌ Failed to create Jules session (HTTP ${HTTP_CODE}):"
+            echo "$RESPONSE_BODY"
+            exit 1
+          fi
+
+          SESSION_NAME=$(echo "$RESPONSE_BODY" | python3 -c 'import sys,json; print(json.loads(sys.stdin.read())["name"])')
+          SESSION_URL=$(echo "$RESPONSE_BODY" | python3 -c 'import sys,json; print(json.loads(sys.stdin.read()).get("url","N/A"))')
+
+          echo "✅ Jules session created: ${SESSION_NAME}"
+          echo "🔗 Session URL: ${SESSION_URL}"
+
+          # --- Fire and forget ---
+          echo ""
+          echo "🚀 Fire-and-forget: Jules is processing the request asynchronously."
+          exit 0
