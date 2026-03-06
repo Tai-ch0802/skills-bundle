@@ -2,7 +2,7 @@
 
 ## Overview
 
-This repository is a **curated collection of 62 AI agent skills** for coding assistants, bundled from multiple sources with an interactive installer and Traditional Chinese translations.
+This repository is a **curated collection of 63 AI agent skills** for coding assistants, bundled from multiple sources with an interactive installer and Traditional Chinese translations.
 
 ## Skill Categories
 
@@ -11,7 +11,7 @@ This repository is a **curated collection of 62 AI agent skills** for coding ass
 | **SDD Pack** (original) | 4 | `prd`, `sa`, `sdd`, `refactoring` |
 | **Antigravity Kit** (from vudovn) | 28 | `api-patterns`, `architecture`, `database-design`, … |
 | **Anthropic Official** (from anthropics) | 17 | `claude-api`, `frontend-design`, `mcp-builder`, `docx`, `pdf`, `pptx`, `xlsx`, … |
-| **Gemini API** (from google-gemini) | 3 | `gemini-api-dev`, `gemini-interactions-api`, `gemini-live-api-dev` |
+| **Gemini API** (from google-gemini) | 4 | `gemini-api-dev`, `gemini-interactions-api`, `gemini-live-api-dev`, `vertex-ai-api-dev` |
 | **ClawHub** (from biostartechnology, spclaudehome) | 2 | `humanizer`, `skill-vetter` |
 | **Composite** (merged & curated) | 2 | `testing-mastery`, `code-quality` |
 | **Cloud & Memory** (original) | 3 | `pcloud`, `agent-brain` |
@@ -62,9 +62,9 @@ skills-bundle/
 ├── pcloud/                # pCloud cloud storage API
 ├── agent-brain/           # Persistent cross-session memory
 ├── i18n/
-│   └── zh-TW/             # Traditional Chinese translations (all 62 skills)
+│   └── zh-TW/             # Traditional Chinese translations (all 63 skills)
 ├── bin/
-│   └── install.mjs        # Interactive installer (⚡ downloads 48 skills at runtime)
+│   └── install.mjs        # Interactive installer (⚡ downloads 49 skills at runtime)
 ├── .github/workflows/     # Upstream sync GitHub Actions (metadata & i18n only)
 └── package.json
 ```

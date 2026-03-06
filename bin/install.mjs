@@ -90,6 +90,7 @@ const LANGUAGES = {
         'tailwind-patterns': 'Tailwind CSS v4 — CSS-first config, container queries, design tokens',
         'testing-mastery': 'Unified testing — TDD, unit/integration patterns, E2E/Playwright (merged from tdd-workflow + testing-patterns + webapp-testing)',
         'vulnerability-scanner': 'Vulnerability analysis — OWASP 2025, supply chain security',
+        'vertex-ai-api-dev': 'Guides the usage of Gemini API on Google Cloud Vertex AI with the Gen AI SDK. Use when the user asks about using Gemini in an enterprise environment or explicitly mentions Vertex AI. Covers SDK usage (Python, JS/TS, Go, Java, C#), capabilities like Live API, tools, multimedia generation, caching, and batch prediction.',
         'web-design-guidelines': 'UI code review for Web Interface Guidelines compliance',
         pcloud: 'pCloud cloud storage API integration — file management, sharing, streaming, OAuth 2.0',
         'agent-brain': 'Persistent cross-session memory system — digital twin brain with pCloud sync',
@@ -186,6 +187,7 @@ const LANGUAGES = {
         'tailwind-patterns': 'Tailwind CSS v4 — CSS 優先配置、容器查詢、設計代幣',
         'testing-mastery': '統一測試技能 — TDD、單元/整合模式、E2E/Playwright（合併自 tdd-workflow + testing-patterns + webapp-testing）',
         'vulnerability-scanner': '弱點分析 — OWASP 2025、供應鏈安全',
+        'vertex-ai-api-dev': 'Google Cloud Vertex AI 上 Gemini API 使用指南 — 涵蓋 Gen AI SDK（Python, JS/TS, Go, Java, C#）、Live API、工具呼叫、多模態生成、快取與批次預測',
         'web-design-guidelines': 'UI 程式碼審查，符合 Web 介面指南',
         pcloud: 'pCloud 雲端儲存 API 整合 — 檔案管理、分享、串流、OAuth 2.0',
         'agent-brain': '持久化跨 Session 記憶系統 — 數位孿生大腦，搭配 pCloud 同步',
@@ -225,7 +227,7 @@ const SKILLS = [
   'performance-profiling', 'plan-writing', 'powershell-windows', 'python-patterns',
   'red-team-tactics', 'rust-pro', 'seo-fundamentals', 'server-management',
   'skill-vetter', 'systematic-debugging', 'tailwind-patterns', 'testing-mastery',
-  'vulnerability-scanner', 'web-design-guidelines',
+  'vertex-ai-api-dev', 'vulnerability-scanner', 'web-design-guidelines',
   // Anthropic Official Skills (alphabetical)
   'algorithmic-art', 'brand-guidelines', 'canvas-design', 'claude-api',
   'doc-coauthoring', 'docx', 'frontend-design', 'internal-comms',
@@ -292,6 +294,7 @@ const REMOTE_SKILLS = {
   'gemini-api-dev': { repo: 'google-gemini/gemini-skills', path: 'skills/gemini-api-dev', branch: 'main' },
   'gemini-interactions-api': { repo: 'google-gemini/gemini-skills', path: 'skills/gemini-interactions-api', branch: 'main' },
   'gemini-live-api-dev': { repo: 'google-gemini/gemini-skills', path: 'skills/gemini-live-api-dev', branch: 'main' },
+  'vertex-ai-api-dev': { repo: 'google-gemini/gemini-skills', path: 'skills/vertex-ai-api-dev', branch: 'main' },
 };
 
 const DEPENDENCIES = {
@@ -352,6 +355,7 @@ const DEPENDENCIES = {
   'server-management': [],
   'skill-vetter': [],
   'systematic-debugging': [],
+  'vertex-ai-api-dev': [],
 
   // --- Anthropic Official Skills ---
   'algorithmic-art': [],

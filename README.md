@@ -15,12 +15,12 @@ This project integrates skills from multiple sources:
 | **Original** | `prd`, `sa`, `sdd`, `refactoring` | [@Tai-ch0802](https://github.com/Tai-ch0802) |
 | **[antigravity-kit](https://github.com/vudovn/antigravity-kit)** | 28 skills (see below) | [@vudovn](https://github.com/vudovn) |
 | **[skills](https://github.com/anthropics/skills)** | 17 skills (see below) | [@anthropics](https://github.com/anthropics) |
-| **[gemini-skills](https://github.com/google-gemini/gemini-skills)** | `gemini-api-dev`, `gemini-interactions-api`, `gemini-live-api-dev` | [@google-gemini](https://github.com/google-gemini) |
+| **[gemini-skills](https://github.com/google-gemini/gemini-skills)** | `gemini-api-dev`, `gemini-interactions-api`, `gemini-live-api-dev`, `vertex-ai-api-dev` | [@google-gemini](https://github.com/google-gemini) |
 | **[humanizer](https://clawhub.ai/biostartechnology/humanizer)**, **[skill-vetter](https://clawhub.ai/spclaudehome/skill-vetter)** | `humanizer`, `skill-vetter` | ClawHub authors |
 | **Composite (new)** | `testing-mastery`, `code-quality` | Merged & curated by [@Tai-ch0802](https://github.com/Tai-ch0802) |
 | **Cloud & Memory** | `pcloud`, `agent-brain` | [@Tai-ch0802](https://github.com/Tai-ch0802) |
 
-## Available Skills (62)
+## Available Skills (63)
 
 ### SDD Pack (Original)
 
@@ -106,6 +106,7 @@ This project integrates skills from multiple sources:
 | **gemini-api-dev** | Gemini API development — SDK usage, multimodal, function calling, structured output |
 | **gemini-interactions-api** | Gemini Interactions API — agentic applications, server-side state, tool orchestration, deep research |
 | **gemini-live-api-dev** | Gemini Live API development — real-time audio/video streaming, WebSockets, native audio |
+| **vertex-ai-api-dev** | Gemini API in Vertex AI — SDK usage (Python, JS/TS, Go, Java, C#), Live API, tools, multimodal, caching, batch prediction |
 
 ### ClawHub Skills (from [biostartechnology/humanizer](https://clawhub.ai/biostartechnology/humanizer))
 
@@ -326,14 +327,14 @@ skills-bundle/
 ├── pcloud/                # pCloud cloud storage API skill
 ├── agent-brain/           # Persistent cross-session memory
 ├── i18n/
-│   └── zh-TW/             # Traditional Chinese translations (all 62 skills)
+│   └── zh-TW/             # Traditional Chinese translations (all 63 skills)
 ├── bin/
 │   └── install.mjs        # Interactive installer (downloads ⚡ skills at runtime)
 ├── .github/workflows/     # Upstream sync GitHub Actions (metadata & i18n only)
 └── package.json
 ```
 
-> **Note**: 48 skills from upstream repos (Antigravity Kit, Anthropic, Gemini) are **not stored locally**. They are downloaded from GitHub at install time via the `REMOTE_SKILLS` config in `bin/install.mjs`.
+> **Note**: 49 skills from upstream repos (Antigravity Kit, Anthropic, Gemini) are **not stored locally**. They are downloaded from GitHub at install time via the `REMOTE_SKILLS` config in `bin/install.mjs`.
 
 ## License
 
