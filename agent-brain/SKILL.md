@@ -156,12 +156,12 @@ When both local and remote versions of a file have changed since the last sync:
 1. A `~/.agent-brain/tmp/` directory is created for staging
 2. Remote files are downloaded to `tmp/`
 3. Files are merged by type:
-   - **Session logs** (`sessions/*.md`): Append-only merge — deduplicate session blocks
-   - **General Markdown** (`MEMORY.md`, `USER.md`, `projects/*.md`): Remote as base, local-only lines appended
-   - **brain.db**: Local records are migrated into the remote db, then replaces local
+   - **Session logs** (`sessions/*.md`): Append-only merge — deduplicate session blocks by header fingerprint
+   - **General Markdown** (`MEMORY.md`, `USER.md`, `projects/*.md`): Section-level merge using `##` headings as keys — both sides' unique sections are preserved, shared sections keep the longer version
    - **Other files**: Remote version wins
 4. `tmp/` is cleaned up after merge
-5. Final merged result is pushed to pCloud
+5. `brain.db` is **rebuilt from scratch** using `index-memory.py rebuild` — it is treated as a derived artifact and never merged directly
+6. Final merged result (including rebuilt `brain.db`) is pushed to pCloud
 
 ## Memory Hygiene Rules
 

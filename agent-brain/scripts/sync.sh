@@ -220,12 +220,21 @@ except:
 "
 }
 
-# Check if a file should be excluded from sync
+# Check if a file should be excluded from ALL sync operations
 is_excluded() {
   local relative="$1"
   case "${relative}" in
     /.env|/.sync-manifest.json|/.sync-state.json) return 0 ;;
     /tmp|/tmp/*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+# Check if a file is a derived artifact (skip during download/compare, but still push)
+is_derived() {
+  local relative="$1"
+  case "${relative}" in
+    /brain.db|/brain.db-wal|/brain.db-shm) return 0 ;;
     *) return 1 ;;
   esac
 }
@@ -272,21 +281,45 @@ with open(output_path, 'w', encoding='utf-8') as f:
 }
 
 # Merge two general markdown files (MEMORY.md, USER.md, projects/*.md)
+# Strategy: section-level merge using ## headings as keys
 merge_general_md() {
   local local_file="$1"
   local remote_file="$2"
   local output_file="$3"
 
   python3 -c "
-import sys, os
+import re, sys, os
+
+def parse_sections(text):
+    \"\"\"Split markdown into (header, body) sections by ## headings.\"\"\"
+    if not text.strip():
+        return [], ''
+    lines = text.split('\\n')
+    preamble_lines = []
+    sections = []
+    current_header = None
+    current_body = []
+
+    for line in lines:
+        if re.match(r'^## ', line):
+            if current_header is not None:
+                sections.append((current_header, '\\n'.join(current_body).strip()))
+            current_header = line.strip()
+            current_body = []
+        elif current_header is None:
+            preamble_lines.append(line)
+        else:
+            current_body.append(line)
+
+    if current_header is not None:
+        sections.append((current_header, '\\n'.join(current_body).strip()))
+
+    return sections, '\\n'.join(preamble_lines).strip()
 
 local_path, remote_path, output_path = sys.argv[1], sys.argv[2], sys.argv[3]
 
 local_text = open(local_path, encoding='utf-8').read() if os.path.exists(local_path) else ''
 remote_text = open(remote_path, encoding='utf-8').read()
-
-local_lines = set(local_text.strip().split('\\n'))
-remote_lines = set(remote_text.strip().split('\\n'))
 
 # If identical, just use local
 if local_text.strip() == remote_text.strip():
@@ -294,81 +327,43 @@ if local_text.strip() == remote_text.strip():
         f.write(local_text)
     sys.exit(0)
 
-# Strategy: use remote as base, append local-only lines at the end
-remote_sections = remote_text.strip().split('\\n')
-local_only = [l for l in local_text.strip().split('\\n') if l not in remote_lines and l.strip()]
+local_sections, local_preamble = parse_sections(local_text)
+remote_sections, remote_preamble = parse_sections(remote_text)
 
-if local_only:
-    result = remote_text.rstrip() + '\\n\\n<!-- merged from local -->\\n' + '\\n'.join(local_only) + '\\n'
-else:
-    result = remote_text
+# Use the longer preamble (usually # Title + description)
+preamble = local_preamble if len(local_preamble) >= len(remote_preamble) else remote_preamble
+
+# Build section maps
+local_map = {h: b for h, b in local_sections}
+remote_map = {h: b for h, b in remote_sections}
+
+all_headers = list(dict.fromkeys(
+    [h for h, _ in remote_sections] + [h for h, _ in local_sections]
+))
+
+merged_sections = []
+for header in all_headers:
+    local_body = local_map.get(header)
+    remote_body = remote_map.get(header)
+
+    if local_body is not None and remote_body is not None:
+        # Both have this section — keep the longer one (more content = more recent edits)
+        merged_sections.append((header, local_body if len(local_body) >= len(remote_body) else remote_body))
+    elif local_body is not None:
+        merged_sections.append((header, local_body))
+    else:
+        merged_sections.append((header, remote_body))
+
+result_parts = [preamble] if preamble else []
+for header, body in merged_sections:
+    if body:
+        result_parts.append(header + '\\n\\n' + body)
+    else:
+        result_parts.append(header)
 
 with open(output_path, 'w', encoding='utf-8') as f:
-    f.write(result)
+    f.write('\\n\\n'.join(result_parts) + '\\n')
 " "$local_file" "$remote_file" "$output_file"
-}
-
-# Merge SQLite databases: import local records into remote db
-merge_brain_db() {
-  local local_db="$1"
-  local remote_db="$2"
-  local output_db="$3"
-
-  python3 -c "
-import sqlite3, sys, os, shutil
-
-local_db_path, remote_db_path, output_db_path = sys.argv[1], sys.argv[2], sys.argv[3]
-
-# Start with remote as base
-shutil.copy2(remote_db_path, output_db_path)
-
-if not os.path.exists(local_db_path):
-    sys.exit(0)
-
-try:
-    local_conn = sqlite3.connect(local_db_path)
-    output_conn = sqlite3.connect(output_db_path)
-
-    # Get local chunks not in remote (by file_path + chunk_index)
-    local_chunks = local_conn.execute(
-        'SELECT file_path, chunk_index, content, file_hash, updated_at FROM chunks'
-    ).fetchall()
-
-    existing = set()
-    for row in output_conn.execute('SELECT file_path, chunk_index FROM chunks'):
-        existing.add((row[0], row[1]))
-
-    inserted = 0
-    for file_path, chunk_index, content, file_hash, updated_at in local_chunks:
-        if (file_path, chunk_index) not in existing:
-            output_conn.execute(
-                'INSERT INTO chunks (file_path, chunk_index, content, file_hash, updated_at) VALUES (?, ?, ?, ?, ?)',
-                (file_path, chunk_index, content, file_hash, updated_at)
-            )
-            inserted += 1
-
-    # Similarly merge file_state
-    local_states = local_conn.execute(
-        'SELECT file_path, file_hash, indexed_at FROM file_state'
-    ).fetchall()
-
-    for file_path, file_hash, indexed_at in local_states:
-        output_conn.execute(
-            'INSERT OR REPLACE INTO file_state (file_path, file_hash, indexed_at) VALUES (?, ?, ?)',
-            (file_path, file_hash, indexed_at)
-        )
-
-    output_conn.commit()
-    local_conn.close()
-    output_conn.close()
-
-    if inserted > 0:
-        print(f'   🔀 Merged {inserted} chunks into brain.db')
-except Exception as e:
-    print(f'   ⚠ DB merge error: {e}', file=sys.stderr)
-    # Fall back to remote version
-    shutil.copy2(remote_db_path, output_db_path)
-" "$local_db" "$remote_db" "$output_db"
 }
 
 # ─── Push: Upload changed files to pCloud ─────────────────────────────
@@ -440,6 +435,11 @@ do_pull() {
       continue
     fi
 
+    # Skip derived artifacts (brain.db is rebuilt locally)
+    if is_derived "${remote_path}"; then
+      continue
+    fi
+
     local local_path="${BRAIN_DIR}${remote_path}"
 
     # Check if local file exists and compare SHA
@@ -486,6 +486,11 @@ do_sync() {
   if [[ -n "${remote_files}" ]]; then
     while IFS= read -r remote_path; do
       if is_excluded "${remote_path}"; then
+        continue
+      fi
+
+      # Skip derived artifacts — brain.db will be rebuilt after merge
+      if is_derived "${remote_path}"; then
         continue
       fi
 
@@ -540,10 +545,6 @@ do_sync() {
           merge_session_md "${local_path}" "${tmp_path}" "${local_path}"
           log "   🔀 Merged session log"
           ;;
-        /brain.db)
-          merge_brain_db "${local_path}" "${tmp_path}" "${local_path}"
-          log "   🔀 Merged brain.db"
-          ;;
         *.md)
           merge_general_md "${local_path}" "${tmp_path}" "${local_path}"
           log "   🔀 Merged markdown"
@@ -562,7 +563,17 @@ do_sync() {
   # 3. Clean up tmp
   rm -rf "${TMP_DIR}"
 
-  # 4. Now push all local changes
+  # 4. Rebuild brain.db from merged markdown files
+  #    brain.db is a derived artifact — never merged directly
+  log ""
+  log "🧠 Rebuilding brain.db from merged markdown..."
+  rm -f "${BRAIN_DIR}/brain.db" "${BRAIN_DIR}/brain.db-wal" "${BRAIN_DIR}/brain.db-shm"
+
+  local script_dir
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  python3 "${script_dir}/index-memory.py" rebuild
+
+  # 5. Now push all local changes (including rebuilt brain.db)
   echo ""
   do_push
 

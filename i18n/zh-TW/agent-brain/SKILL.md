@@ -150,12 +150,12 @@ bash ~/.gemini/antigravity/skills/agent-brain/scripts/sync.sh sync
 1. 建立 `~/.agent-brain/tmp/` 暫存目錄
 2. 將遠端檔案下載至 `tmp/`
 3. 根據檔案類型進行合併：
-   - **Session 日誌**（`sessions/*.md`）：追加合併 — 去重 session 區塊
-   - **一般 Markdown**（`MEMORY.md`、`USER.md`、`projects/*.md`）：以遠端為基礎，附加本地獨有的行
-   - **brain.db**：將本地記錄遷移至遠端 db 後取代本地版本
+   - **Session 日誌**（`sessions/*.md`）：追加合併 — 以標頭指紋去重 session 區塊
+   - **一般 Markdown**（`MEMORY.md`、`USER.md`、`projects/*.md`）：以 `##` 標題為 key 的區段級合併 — 雙方獨有的區段都保留，共有區段取較長的版本
    - **其他檔案**：以遠端版本為準
 4. 合併完成後清理 `tmp/`
-5. 最終合併結果推送至 pCloud
+5. `brain.db` **從頭重建** — 使用 `index-memory.py rebuild` 重建，brain.db 視為衍生產物，永不直接合併
+6. 最終合併結果（含重建的 `brain.db`）推送至 pCloud
 
 ## 記憶維護規則
 

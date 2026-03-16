@@ -3,7 +3,8 @@
 
 Usage:
     python3 index-memory.py init              # Initialize database schema
-    python3 index-memory.py index             # Index/re-index all markdown files
+    python3 index-memory.py index             # Index/re-index changed markdown files
+    python3 index-memory.py rebuild           # Delete brain.db and rebuild from scratch
     python3 index-memory.py search "query"    # Full-text search across memory
 """
 
@@ -118,7 +119,22 @@ def chunk_text(text: str) -> list[str]:
     return [c for c in chunks if c]
 
 
-def index_files():
+def rebuild_db():
+    """Delete brain.db and rebuild from scratch."""
+    if DB_PATH.exists():
+        DB_PATH.unlink()
+    # Also remove WAL/SHM files if present
+    for suffix in ["-wal", "-shm"]:
+        wal_path = DB_PATH.parent / (DB_PATH.name + suffix)
+        if wal_path.exists():
+            wal_path.unlink()
+
+    print("🗑  Deleted old brain.db")
+    init_db()
+    index_files(force=True)
+
+
+def index_files(force: bool = False):
     """Index all markdown files in the brain directory."""
     if not DB_PATH.exists():
         init_db()
@@ -132,8 +148,16 @@ def index_files():
 
     # Get current file states
     existing = {}
-    for row in db.execute("SELECT file_path, file_hash FROM file_state"):
-        existing[row[0]] = row[1]
+    if not force:
+        try:
+            for row in db.execute("SELECT file_path, file_hash FROM file_state"):
+                existing[row[0]] = row[1]
+        except sqlite3.DatabaseError:
+            # FTS5 index corrupted — fall back to full rebuild
+            print("⚠ Database corrupted, performing full rebuild...")
+            db.close()
+            rebuild_db()
+            return
 
     indexed = 0
     skipped = 0
@@ -143,8 +167,8 @@ def index_files():
         relative = str(md_file.relative_to(BRAIN_DIR))
         current_hash = file_hash(md_file)
 
-        # Skip if unchanged
-        if relative in existing and existing[relative] == current_hash:
+        # Skip if unchanged (unless force rebuild)
+        if not force and relative in existing and existing[relative] == current_hash:
             skipped += 1
             continue
 
@@ -152,25 +176,32 @@ def index_files():
         content = md_file.read_text(encoding="utf-8")
         chunks = chunk_text(content)
 
-        # Remove old chunks for this file
-        db.execute("DELETE FROM chunks WHERE file_path = ?", (relative,))
+        try:
+            # Remove old chunks for this file
+            db.execute("DELETE FROM chunks WHERE file_path = ?", (relative,))
 
-        # Insert new chunks
-        for i, chunk in enumerate(chunks):
+            # Insert new chunks
+            for i, chunk in enumerate(chunks):
+                db.execute(
+                    "INSERT INTO chunks (file_path, chunk_index, content, file_hash, updated_at) "
+                    "VALUES (?, ?, ?, ?, ?)",
+                    (relative, i, chunk, current_hash, now),
+                )
+
+            # Update file state
             db.execute(
-                "INSERT INTO chunks (file_path, chunk_index, content, file_hash, updated_at) "
-                "VALUES (?, ?, ?, ?, ?)",
-                (relative, i, chunk, current_hash, now),
+                "INSERT OR REPLACE INTO file_state (file_path, file_hash, indexed_at) "
+                "VALUES (?, ?, ?)",
+                (relative, current_hash, now),
             )
 
-        # Update file state
-        db.execute(
-            "INSERT OR REPLACE INTO file_state (file_path, file_hash, indexed_at) "
-            "VALUES (?, ?, ?)",
-            (relative, current_hash, now),
-        )
-
-        indexed += 1
+            indexed += 1
+        except sqlite3.DatabaseError:
+            # FTS5 index corrupted mid-operation — fall back to full rebuild
+            print("⚠ Database error during indexing, performing full rebuild...")
+            db.close()
+            rebuild_db()
+            return
 
     # Clean up files that no longer exist
     current_files = {str(f.relative_to(BRAIN_DIR)) for f in md_files}
@@ -193,21 +224,28 @@ def search(query: str, limit: int = 10):
 
     db = get_db()
 
-    results = db.execute(
-        """
-        SELECT
-            c.file_path,
-            c.chunk_index,
-            snippet(chunks_fts, 0, '>>>', '<<<', '...', 64) as snippet,
-            rank
-        FROM chunks_fts
-        JOIN chunks c ON chunks_fts.rowid = c.id
-        WHERE chunks_fts MATCH ?
-        ORDER BY rank
-        LIMIT ?
-        """,
-        (query, limit),
-    ).fetchall()
+    try:
+        results = db.execute(
+            """
+            SELECT
+                c.file_path,
+                c.chunk_index,
+                snippet(chunks_fts, 0, '>>>', '<<<', '...', 64) as snippet,
+                rank
+            FROM chunks_fts
+            JOIN chunks c ON chunks_fts.rowid = c.id
+            WHERE chunks_fts MATCH ?
+            ORDER BY rank
+            LIMIT ?
+            """,
+            (query, limit),
+        ).fetchall()
+    except sqlite3.DatabaseError:
+        print("⚠ FTS5 index corrupted. Rebuilding...")
+        db.close()
+        rebuild_db()
+        print("🔄 Rebuild complete. Please re-run your search.")
+        return
 
     if not results:
         print(f"No results found for: {query}")
@@ -233,6 +271,8 @@ def main():
         init_db()
     elif command == "index":
         index_files()
+    elif command == "rebuild":
+        rebuild_db()
     elif command == "search":
         if len(sys.argv) < 3:
             print("Usage: index-memory.py search \"query\"")
@@ -246,3 +286,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
