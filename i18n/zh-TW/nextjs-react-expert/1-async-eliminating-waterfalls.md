@@ -7,7 +7,7 @@
 
 ## 概述
 
-本章節包含 **5 個規則**，專注於消除非必要的非同步順序執行（瀑布流）。
+本章節包含 **6 個規則**，專注於消除瀑布流，現在包含 Next.js 16 `after()` 和 `connection()` 模式。
 
 ---
 
@@ -309,3 +309,43 @@ function DataSummary({ dataPromise }: { dataPromise: Promise<Data> }) {
 - 當你想要避免佈局偏移 (Layout Shift, 載入中 → 內容跳動)。
 
 **權衡：** 追求更快的初始繪製 (Initial Paint) vs. 潛在的佈局偏移。根據你的 UX 優先順序進行選擇。
+
+
+---
+
+## 規則 1.6：使用 `after()` 和 `connection()` (Next.js 16+)
+
+**影響力：** 高 (HIGH)
+**標籤：** nextjs16, async, runtime, performance
+
+Next.js 16 引入了 API 以防止「阻塞主執行緒」，並確保對「動態執行期 (Dynamic Runtime)」的感知。
+
+### 1. 用於非阻塞邏輯的 `after()`
+避免在不影響初始 UI 的邏輯（記錄、分析、發送電子郵件）上使用 `await`。
+
+```tsx
+import { after } from 'next/server'
+
+export default async function Page() {
+  const data = await fetchData() // CRITICAL
+
+  after(() => {
+    // 在響應發送後執行
+    logTrack(data)
+  })
+
+  return <View data={data} />
+}
+```
+
+### 2. 用於動態意圖的 `connection()`
+使用 `connection()` 來發出信號，表示某個元件是動態的，不應該被預先渲染為靜態內容，從而允許頁面的其他部分獨立串流傳輸。
+
+```tsx
+import { connection } from 'next/server'
+
+async function DynamicData() {
+  await connection() // 發出動態意圖的信號
+  return await fetchFreshData()
+}
+```

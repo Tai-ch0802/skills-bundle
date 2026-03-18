@@ -31,6 +31,7 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 | `6-rendering-rendering-performance.md` | 🟡 **中** | 9 條 | 渲染瓶頸、虛擬化、圖片最佳化 |
 | `7-js-javascript-performance.md` | ⚪ **低中** | 12 條 | 微觀最佳化、快取、迴圈效能 |
 | `8-advanced-advanced-patterns.md` | 🔵 **不定** | 3 條 | 進階 React 模式、useLatest、init-once |
+| `9-cache-components.md` | 🔴 **關鍵** | 4 個部分 | **僅限 Next.js 16+**：`use cache`、`cacheLife`、PPR、`cacheTag` |
 
 **總計：8 類別共 57 條規則**
 
@@ -64,6 +65,9 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 🌐 客戶端資料抓取問題
   → 閱讀第 4 節：客戶端資料抓取
   → 檢查：SWR 去重、localStorage
+
+🚀 **Next.js 16+ 效能 (快取與 PPR)**
+  → 閱讀第 9 節：快取元件
 ```
 
 ---
@@ -90,6 +94,9 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 4️⃣ 低（打磨 — 最後）：
    ├─ 第 7 節：JavaScript 效能
    └─ 第 8 節：進階模式
+
+🔥 **現代 (Next.js 16+)：**
+   └─ 第 9 節：快取元件 (取代多數傳統重新驗證)
 ```
 
 ---

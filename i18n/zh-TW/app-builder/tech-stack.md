@@ -10,7 +10,8 @@
   語言: TypeScript 5.7+
   樣式: Tailwind CSS v4
   狀態: React 19 Actions / Server Components
-  打包器: Turbopack (Stable for Dev)
+  快取: Next.js 16 Cache Components (Stable)
+  打包器: Turbopack (Stable for Dev & Build)
 
 後端:
   執行期: Node.js 23
