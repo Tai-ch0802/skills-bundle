@@ -4,7 +4,7 @@
 
 ---
 
-## Next.js 全端結構（2025 最佳化）
+## Next.js 全端結構（2026+ Next.js 16 最佳化）
 
 ```
 project-name/
@@ -78,6 +78,7 @@ project-name/
 
 | 檔案 | 用途 |
 |------|------|
+| `proxy.ts` | Next.js 16 網路邊界邏輯（驗證、重導向） |
 | `package.json` | 依賴 |
 | `tsconfig.json` | TypeScript + 路徑別名（`@/features/*`）|
 | `tailwind.config.ts` | Tailwind 配置 |
@@ -85,6 +86,7 @@ project-name/
 | `README.md` | 專案文件 |
 | `.gitignore` | Git 忽略規則 |
 | `prisma/schema.prisma` | 資料庫 schema |
+| `src/server/cache-handler.ts` | Next.js 16 快取元件管理 |
 
 ---
 
