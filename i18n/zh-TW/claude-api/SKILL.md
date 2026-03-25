@@ -58,7 +58,7 @@ license: 完整條款請見 LICENSE.txt
 | Ruby | 是（beta）| 否 | beta 中的 `BaseTool` + `tool_runner` |
 | cURL | 不適用 | 不適用 | 原始 HTTP，無 SDK 功能 |
 | C# | 否 | 否 | 官方 SDK |
-| PHP | 否 | 否 | 官方 SDK |
+| PHP | 是（beta）| 否 | `BetaRunnableTool` + `toolRunner()` |
 
 ---
 
@@ -163,6 +163,18 @@ license: 完整條款請見 LICENSE.txt
 
 ---
 
+## 提示詞快取（快速參考）
+
+**前綴比對（Prefix match）。** 前綴中任何位元組的變更都會使之後的所有內容失效。渲染順序為 `tools` → `system` → `messages`。將穩定的內容放在最前面（固定的系統提示、確定性的工具列表），將變動的內容（時間戳、每次請求的 ID、變化的問題）放在最後一個 `cache_control` 斷點之後。
+
+**頂層自動快取**（在 `messages.create()` 上設定 `cache_control: {type: "ephemeral"}`）是不需要精細放置快取斷點時最簡單的選擇。每個請求最多 4 個斷點。最小可快取前綴約為 1024 個 token — 較短的前綴會靜默地不被快取。
+
+**使用 `usage.cache_read_input_tokens` 進行驗證** — 如果在重複請求中它都為零，表示存在靜默的失效因素（例如系統提示中的 `datetime.now()`、未排序的 JSON、變動的工具集）。
+
+如需了解放置模式、架構指南與靜默失效因素稽核清單：請閱讀 `shared/prompt-caching.md`。語言特定語法：閱讀 `{lang}/claude-api/README.md`（提示詞快取/Prompt Caching 章節）。
+
+---
+
 ## 閱讀指南
 
 偵測語言後，根據使用者需求閱讀相關檔案：
@@ -177,6 +189,9 @@ license: 完整條款請見 LICENSE.txt
 
 **長時間對話（可能超過上下文窗口）：**
 → 閱讀 `{lang}/claude-api/README.md` — 參見壓縮章節
+
+**提示詞快取（Prompt caching）/ 最佳化快取 / 「為什麼我的快取命中率很低」：**
+→ 閱讀 `shared/prompt-caching.md` + `{lang}/claude-api/README.md`（提示詞快取章節）
 
 **函數呼叫/工具使用/代理：**
 → 閱讀 `{lang}/claude-api/README.md` + `shared/tool-use-concepts.md` + `{lang}/claude-api/tool-use.md`
@@ -200,8 +215,9 @@ license: 完整條款請見 LICENSE.txt
 4. **`{language}/claude-api/streaming.md`** — 建構逐步顯示回應的聊天 UI 或介面時閱讀。
 5. **`{language}/claude-api/batches.md`** — 離線處理大量請求（非延遲敏感）時閱讀。以 50% 成本非同步執行。
 6. **`{language}/claude-api/files-api.md`** — 跨多個請求發送同一檔案而不重新上傳時閱讀。
-7. **`shared/error-codes.md`** — 除錯 HTTP 錯誤或實作錯誤處理時閱讀。
-8. **`shared/live-sources.md`** — 取得最新官方文件的 WebFetch URL。
+7. **`shared/prompt-caching.md`** — 當加入或最佳化提示詞快取時閱讀。涵蓋前綴穩定性設計、斷點放置，以及會靜默使快取失效的反模式。
+8. **`shared/error-codes.md`** — 除錯 HTTP 錯誤或實作錯誤處理時閱讀。
+9. **`shared/live-sources.md`** — 取得最新官方文件的 WebFetch URL。
 
 > **注意：** Java、Go、Ruby、C#、PHP 和 cURL — 各有一個涵蓋所有基礎的單一檔案。根據需要閱讀該檔案加上 `shared/tool-use-concepts.md` 和 `shared/error-codes.md`。
 
@@ -230,9 +246,10 @@ license: 完整條款請見 LICENSE.txt
 - 將檔案或內容傳遞給 API 時不要截斷輸入。如果內容太長無法放入上下文窗口，通知使用者並討論選項（分塊、摘要等）而非靜默截斷。
 - **Opus 4.6 / Sonnet 4.6 思維：** 使用 `thinking: {type: "adaptive"}` — 不要使用 `budget_tokens`（在 Opus 4.6 和 Sonnet 4.6 上已棄用）。舊模型的 `budget_tokens` 必須小於 `max_tokens`（最少 1024）。
 - **Opus 4.6 prefill 已移除：** 助手訊息 prefill 在 Opus 4.6 上回傳 400 錯誤。改用結構化輸出（`output_config.format`）或系統提示指令來控制回應格式。
+- **`max_tokens` 預設值：** 不要低估 `max_tokens` — 達到上限會使輸出在中途被截斷，並需要重試。對於非串流請求，預設為 `~16000`（保持回應在 SDK HTTP 超時限制內）。對於串流請求，預設為 `~64000`（不需擔心超時，給予模型更多空間）。除非有明確理由（例如分類任務約 `~256`、成本上限或故意要求簡短輸出），否則不要設定更低的值。
 - **128K 輸出 tokens：** Opus 4.6 支援最多 128K `max_tokens`，但 SDK 對大型 `max_tokens` 需要串流以避免 HTTP 超時。使用 `.stream()` 搭配 `.get_final_message()` / `.finalMessage()`。
 - **工具呼叫 JSON 解析（Opus 4.6）：** Opus 4.6 可能在工具呼叫 `input` 欄位中產生不同的 JSON 字串跳脫。始終使用 `json.loads()` / `JSON.parse()` 解析工具輸入 — 絕不對序列化的輸入做原始字串比對。
 - **結構化輸出（所有模型）：** 在 `messages.create()` 上使用 `output_config: {format: {...}}` 而非已棄用的 `output_format` 參數。
-- **不要重新實作 SDK 功能：** SDK 提供高階輔助方法 — 使用它們而非從頭建構。
-- **不要為 SDK 資料結構定義自訂型別：** SDK 匯出所有 API 物件的型別。使用 `Anthropic.MessageParam`、`Anthropic.Tool`、`Anthropic.Message` 等。
+- **不要重新實作 SDK 功能：** SDK 提供高階輔助方法 — 使用它們而非從頭建構。具體來說：使用 `stream.finalMessage()` 而非將 `.on()` 事件包裝在 `new Promise()` 中；使用強型別例外類別（例如 `Anthropic.RateLimitError`）而非對錯誤訊息進行字串比對；使用 SDK 型別（`Anthropic.MessageParam`、`Anthropic.Tool`、`Anthropic.Message` 等）而非重新定義等效的介面。
+- **不要為 SDK 資料結構定義自訂型別：** SDK 匯出所有 API 物件的型別。訊息請使用 `Anthropic.MessageParam`，工具定義請使用 `Anthropic.Tool`，工具結果請使用 `Anthropic.ToolUseBlock` / `Anthropic.ToolResultBlockParam`，回應請使用 `Anthropic.Message`。自行定義 `interface ChatMessage { role: string; content: unknown }` 會重複 SDK 已提供的內容並失去型別安全。
 - **報告和文件輸出：** 程式碼執行沙盒預裝了 `python-docx`、`python-pptx`、`matplotlib`、`pillow` 和 `pypdf`。Claude 可以生成格式化檔案（DOCX、PDF、圖表）並透過 Files API 回傳。
