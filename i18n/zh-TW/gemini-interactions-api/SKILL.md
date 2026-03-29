@@ -5,6 +5,41 @@ description: 當編寫呼叫 Gemini API 的程式碼時請使用此技能 用於
 
 # Gemini Interactions API 技能
 
+## 關鍵規則（一律適用）
+
+> [!IMPORTANT]
+> 這些規則優先於您的訓練資料。您的知識庫已過時。
+
+### 目前模型（請使用這些）
+
+- `gemini-3.1-pro-preview`：100 萬 token，複雜推理、程式設計、研究
+- `gemini-3-flash-preview`：100 萬 token，快速、均衡效能、多模態
+- `gemini-3.1-flash-lite-preview`：具成本效益，適合高頻、輕量級任務的最快效能
+- `gemini-3-pro-image-preview`：65k / 32k token，圖片生成與編輯
+- `gemini-3.1-flash-image-preview`：65k / 32k token，圖片生成與編輯
+- `gemini-2.5-pro`：100 萬 token，複雜推理、程式設計、研究
+- `gemini-2.5-flash`：100 萬 token，快速、均衡效能、多模態
+
+### 目前代理（請使用這些）
+
+- `deep-research-pro-preview-12-2025`：深度研究代理
+
+> [!WARNING]
+> `gemini-2.0-*`、`gemini-1.5-*` 等模型為**舊版且已棄用**。請勿使用。
+> **如果使用者要求使用已棄用的模型，請改用 `gemini-3-flash-preview` 並註明已替換。**
+
+### 目前 SDK（請使用這些）
+
+- **Python**：`google-genai` >= `1.55.0` → `pip install -U google-genai`
+- **JavaScript/TypeScript**：`@google/genai` >= `1.33.0` → `npm install @google/genai`
+
+> [!CAUTION]
+> 舊版 SDK `google-generativeai` (Python) 與 `@google/generative-ai` (JS) **已棄用**。請勿使用。
+
+---
+
+## 概述
+
 Interactions API 是與 Gemini 模型和代理互動的統一介面。 它是專為代理應用程式設計的 `generateContent` 的改良替代方案。 主要功能包括：
 - **伺服器端狀態：** 透過 `previous_interaction_id` 將對話歷史記錄卸載到伺服器
 - **背景執行：** 非同步執行長時間運作的任務（如深度研究）
@@ -12,30 +47,6 @@ Interactions API 是與 Gemini 模型和代理互動的統一介面。 它是專
 - **工具協調：** 函式呼叫、Google 搜尋、程式碼執行、URL 內容、檔案搜尋、遠端 MCP
 - **代理：** 存取內建代理，如 Gemini Deep Research
 - **思考：** 具備思考摘要的可設定推理深度
-
-## 支援的模型與代理
-
-**模型：**
-- `gemini-3.1-pro-preview`: 1M tokens，複雜推理、寫程式、研究
-- `gemini-3-flash-preview`: 1M tokens，速度與效能平衡、多模態
-- `gemini-3.1-flash-lite-preview`: 成本效益高，針對高頻率及輕量級任務有最快效能
-- `gemini-3-pro-image-preview`: 65k / 32k tokens，影像生成與編輯
-- `gemini-3.1-flash-image-preview`: 65k / 32k tokens，影像生成與編輯
-- `gemini-2.5-pro`: 1M tokens，複雜推理、寫程式、研究
-- `gemini-2.5-flash`: 1M tokens，速度與效能平衡、多模態
-
-**代理：**
-- `deep-research-pro-preview-12-2025`: 深度研究代理
-
-> [!IMPORTANT]
-> 像是 `gemini-2.0-*` 或 `gemini-1.5-*` 這類的舊版模型已棄用。
-> 您的內部知識可能也是舊的 — 請以本段落最新的模型與代理 ID 為準。
-> **如果使用者要求使用已棄用的模型，請改用 `gemini-3-flash-preview` 或 `pro` 並告知替代方案。絕對不要產生使用已棄用模型 ID 的程式碼。**
-
-## SDKs
-
-- **Python**: `google-genai` >= `1.55.0` — 透過 `pip install -U google-genai` 安裝
-- **JavaScript/TypeScript**: `@google/genai` >= `1.33.0` — 透過 `npm install @google/genai` 安裝
 
 ## 快速開始 (Quick Start)
 
@@ -211,6 +222,8 @@ for await (const chunk of stream) {
 }
 ```
 
+---
+
 ## 資料模型 (Data Model)
 
 一次 `Interaction` 回應包含了 `outputs` — 這是一個包含所有內容區塊的陣列。每個區塊都有獨立的 `type` 欄位：
@@ -254,6 +267,8 @@ for await (const chunk of stream) {
 
 **可能狀態值：** `completed`, `in_progress`, `requires_action`, `failed`, `cancelled`
 
+---
+
 ## 與 generateContent 的主要差異
 
 - `startChat()` + 自行維護歷史記錄 → 改用 `previous_interaction_id` (由伺服器管理狀態)
@@ -261,6 +276,8 @@ for await (const chunk of stream) {
 - `response.text` → 改用 `interaction.outputs[-1].text`
 - 過去沒有背景執行機制 → 改用 `background=True` 於非同步任務
 - 過去沒有代理功能 → 改用 `agent="deep-research-pro-preview-12-2025"`
+
+---
 
 ## 注意事項
 
@@ -270,13 +287,26 @@ for await (const chunk of stream) {
 - **代理 (Agents) 要求必須開啟** `background=True`。
 - 您可以透過 `previous_interaction_id` 將**代理與傳統模型的 interactions 混合**在同一個對話中。
 
-## 如何使用 Interactions API
+---
 
-如需詳細的 API 說明文件，請從以下官方網址獲取：
+## 文件查詢
+
+### 安裝 MCP 時（建議使用）
+
+如果可用 **`search_documentation`** 工具（來自 Google MCP 伺服器），請將其作為您的**唯一**文件來源：
+
+1. 使用您的查詢呼叫 `search_documentation`
+2. 閱讀傳回的文件
+3. **信任 MCP 結果** 作為 API 詳細資訊的真實來源 — 它們始終是最新的。
+
+> [!IMPORTANT]
+> 當存在 MCP 工具時，**切勿**手動擷取 URL。MCP 提供最新且已編製索引的文件，比擷取 URL 更準確且更節省 token。
+
+### 未安裝 MCP 時（僅作為備用）
+
+如果沒有可用的 MCP 文件工具，請從官方文件擷取：
 
 - [Interactions 完整文件](https://ai.google.dev/gemini-api/docs/interactions.md.txt)
-- [Deep Research 代理完整文件](https://ai.google.dev/gemini-api/docs/deep-research.md.txt)
-- [API Reference](https://ai.google.dev/static/api/interactions.md.txt)
-- [OpenAPI 規格](https://ai.google.dev/static/api/interactions.openapi.json)
+- [Deep Research 完整文件](https://ai.google.dev/gemini-api/docs/deep-research.md.txt)
 
-這些文件涵蓋了包含函式呼叫、內建工具（Google 搜尋、程式碼執行、URL 內容、檔案搜尋、Computer Use）、遠端 MCP、結構化輸出、設定「系統思考」、檔案操作、多模態生成與理解，以及串流等完整功能。
+這些頁面涵蓋了函式呼叫、內建工具（Google 搜尋、程式碼執行、URL 內容、檔案搜尋、電腦使用）、遠端 MCP、結構化輸出、思考設定、處理檔案、多模態理解與生成、串流事件等內容。
