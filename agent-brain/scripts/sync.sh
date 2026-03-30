@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # sync.sh — Incremental SHA-based pCloud sync for agent-brain
-# Usage: sync.sh [push|pull|sync]
+# Usage: sync.sh [push|pull|sync|status]
 set -euo pipefail
 
 BRAIN_DIR="${HOME}/.agent-brain"
@@ -24,6 +24,8 @@ MODE="${1:-sync}"
 # ─── Helper Functions ────────────────────────────────────────────────
 
 log() { echo "   $1"; }
+
+timestamp() { date '+%Y-%m-%d %H:%M:%S'; }
 
 # Compute SHA256 of a local file (macOS + Linux compatible)
 local_sha256() {
@@ -139,7 +141,9 @@ upload_file() {
     -F "filename=${filename}" \
     -F "file=@${local_path}" > /dev/null 2>&1
 
-  log "↑ ${remote_dir:+${remote_dir}/}${filename}"
+  local size
+  size=$(wc -c < "${local_path}" | tr -d ' ')
+  log "↑ ${remote_dir:+${remote_dir}/}${filename} (${size} bytes)"
 }
 
 # Download a file from pCloud
@@ -168,7 +172,10 @@ print('https://' + d['hosts'][0] + d['path'])
 
   mkdir -p "$(dirname "${local_path}")"
   curl -s -o "${local_path}" "${download_url}"
-  log "↓ ${remote_path}"
+
+  local size
+  size=$(wc -c < "${local_path}" | tr -d ' ')
+  log "↓ ${remote_path} (${size} bytes)"
   return 0
 }
 
@@ -225,6 +232,7 @@ is_excluded() {
   local relative="$1"
   case "${relative}" in
     /.env|/.sync-manifest.json|/.sync-state.json) return 0 ;;
+    /STATE.md) return 0 ;;    # STATE is ephemeral, never synced
     /tmp|/tmp/*) return 0 ;;
     *) return 1 ;;
   esac
@@ -252,7 +260,8 @@ import re, sys
 
 def extract_sessions(text):
     \"\"\"Extract session blocks from a session markdown file.\"\"\"
-    blocks = re.split(r'(?=^## Session \d{2}:\d{2})', text, flags=re.MULTILINE)
+    # Support both HH:MM and HH:MM:SS formats
+    blocks = re.split(r'(?=^## Session \d{2}:\d{2}(?::\d{2})?)', text, flags=re.MULTILINE)
     return [b.strip() for b in blocks if b.strip()]
 
 local_path, remote_path, output_path = sys.argv[1], sys.argv[2], sys.argv[3]
@@ -290,11 +299,29 @@ merge_general_md() {
   python3 -c "
 import re, sys, os
 
+def clean_merge_artifacts(text):
+    \"\"\"Remove merge marker comments and duplicate preambles from previous syncs.\"\"\"
+    # Remove <!-- merged from local --> markers
+    text = re.sub(r'\n*<!-- merged from local -->\n*', '\n', text)
+    # Remove duplicate '> Last updated:' lines (keep the first one only)
+    lines = text.split('\n')
+    seen_updated = False
+    cleaned = []
+    for line in lines:
+        if re.match(r'^> Last updated:', line.strip()):
+            if not seen_updated:
+                seen_updated = True
+                cleaned.append(line)
+            # Skip subsequent duplicates
+        else:
+            cleaned.append(line)
+    return '\n'.join(cleaned)
+
 def parse_sections(text):
     \"\"\"Split markdown into (header, body) sections by ## headings.\"\"\"
     if not text.strip():
         return [], ''
-    lines = text.split('\\n')
+    lines = text.split('\n')
     preamble_lines = []
     sections = []
     current_header = None
@@ -303,7 +330,7 @@ def parse_sections(text):
     for line in lines:
         if re.match(r'^## ', line):
             if current_header is not None:
-                sections.append((current_header, '\\n'.join(current_body).strip()))
+                sections.append((current_header, '\n'.join(current_body).strip()))
             current_header = line.strip()
             current_body = []
         elif current_header is None:
@@ -312,16 +339,20 @@ def parse_sections(text):
             current_body.append(line)
 
     if current_header is not None:
-        sections.append((current_header, '\\n'.join(current_body).strip()))
+        sections.append((current_header, '\n'.join(current_body).strip()))
 
-    return sections, '\\n'.join(preamble_lines).strip()
+    return sections, '\n'.join(preamble_lines).strip()
 
 local_path, remote_path, output_path = sys.argv[1], sys.argv[2], sys.argv[3]
 
 local_text = open(local_path, encoding='utf-8').read() if os.path.exists(local_path) else ''
 remote_text = open(remote_path, encoding='utf-8').read()
 
-# If identical, just use local
+# Clean up artifacts from previous merges
+local_text = clean_merge_artifacts(local_text)
+remote_text = clean_merge_artifacts(remote_text)
+
+# If identical after cleanup, just use local
 if local_text.strip() == remote_text.strip():
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(local_text)
@@ -357,23 +388,123 @@ for header in all_headers:
 result_parts = [preamble] if preamble else []
 for header, body in merged_sections:
     if body:
-        result_parts.append(header + '\\n\\n' + body)
+        result_parts.append(header + '\n\n' + body)
     else:
         result_parts.append(header)
 
 with open(output_path, 'w', encoding='utf-8') as f:
-    f.write('\\n\\n'.join(result_parts) + '\\n')
+    f.write('\n\n'.join(result_parts) + '\n')
 " "$local_file" "$remote_file" "$output_file"
+}
+
+# ─── Status: Dry-run preview of what would change ─────────────────────
+
+do_status() {
+  echo "📊 Sync Status ($(timestamp))"
+  echo "════════════════════════════════════════════"
+
+  local to_push=0
+  local to_pull=0
+  local conflicts=0
+  local up_to_date=0
+
+  echo ""
+  echo "   Local changes (would push):"
+
+  # Check local files
+  while IFS= read -r -d '' file; do
+    local relative="${file#${BRAIN_DIR}}"
+
+    if is_excluded "${relative}"; then
+      continue
+    fi
+
+    local current_sha
+    current_sha=$(local_sha256 "${file}")
+    local saved_sha
+    saved_sha=$(manifest_sha "${relative}")
+
+    if [[ "${current_sha}" != "${saved_sha}" ]]; then
+      local size
+      size=$(wc -c < "${file}" | tr -d ' ')
+      log "   → ${relative} (${size} bytes)"
+      to_push=$((to_push + 1))
+    else
+      up_to_date=$((up_to_date + 1))
+    fi
+  done < <(find "${BRAIN_DIR}" -type f \
+    ! -name ".env" \
+    ! -name ".sync-manifest.json" \
+    ! -name ".sync-state.json" \
+    ! -name "STATE.md" \
+    ! -path "*/tmp/*" \
+    ! -path "*/.git/*" \
+    -print0)
+
+  if [[ ${to_push} -eq 0 ]]; then
+    log "   (none)"
+  fi
+
+  echo ""
+  echo "   Remote changes (would pull):"
+
+  local remote_files
+  remote_files=$(list_remote_files 2>/dev/null || echo "")
+
+  if [[ -n "${remote_files}" ]]; then
+    while IFS= read -r remote_path; do
+      if is_excluded "${remote_path}"; then
+        continue
+      fi
+      if is_derived "${remote_path}"; then
+        continue
+      fi
+
+      local local_path="${BRAIN_DIR}${remote_path}"
+
+      if [[ -f "${local_path}" ]]; then
+        local local_sha
+        local_sha=$(local_sha256 "${local_path}")
+        local r_sha
+        r_sha=$(remote_sha256 "${remote_path}")
+
+        if [[ -n "${r_sha}" && "${local_sha}" != "${r_sha}" ]]; then
+          local saved_sha
+          saved_sha=$(manifest_sha "${remote_path}")
+          if [[ "${local_sha}" != "${saved_sha}" && "${r_sha}" != "${saved_sha}" ]]; then
+            log "   ⚠ ${remote_path} (CONFLICT — both sides changed)"
+            conflicts=$((conflicts + 1))
+          elif [[ "${local_sha}" == "${saved_sha}" ]]; then
+            log "   ← ${remote_path}"
+            to_pull=$((to_pull + 1))
+          fi
+        fi
+      else
+        log "   ← ${remote_path} (new)"
+        to_pull=$((to_pull + 1))
+      fi
+    done <<< "${remote_files}"
+  fi
+
+  if [[ ${to_pull} -eq 0 && ${conflicts} -eq 0 ]]; then
+    log "   (none)"
+  fi
+
+  echo ""
+  echo "════════════════════════════════════════════"
+  echo "   Summary: ${to_push} to push, ${to_pull} to pull, ${conflicts} conflicts, ${up_to_date} up-to-date"
+  echo ""
 }
 
 # ─── Push: Upload changed files to pCloud ─────────────────────────────
 
 do_push() {
-  echo "☁️  Pushing local changes to pCloud..."
+  echo "☁️  Pushing local changes to pCloud... ($(timestamp))"
   ensure_remote_folder ""
 
   local files_pushed=0
   local files_skipped=0
+  local files_new=0
 
   while IFS= read -r -d '' file; do
     local relative="${file#${BRAIN_DIR}}"
@@ -398,6 +529,10 @@ do_push() {
       continue
     fi
 
+    if [[ -z "${saved_sha}" ]]; then
+      files_new=$((files_new + 1))
+    fi
+
     upload_file "${file}" "${dir}"
     update_manifest "${relative}" "${current_sha}"
     files_pushed=$((files_pushed + 1))
@@ -405,18 +540,28 @@ do_push() {
     ! -name ".env" \
     ! -name ".sync-manifest.json" \
     ! -name ".sync-state.json" \
+    ! -name "STATE.md" \
     ! -path "*/tmp/*" \
     ! -path "*/.git/*" \
     -print0)
 
-  log ""
-  log "✅ Pushed ${files_pushed} files (${files_skipped} unchanged)"
+  echo ""
+  echo "   ┌─────────────────────────────────┐"
+  echo "   │ Push Summary                    │"
+  echo "   ├─────────────────────────────────┤"
+  printf "   │ %-20s %10s │\n" "Pushed (updated):" "$((files_pushed - files_new))"
+  printf "   │ %-20s %10s │\n" "Pushed (new):" "${files_new}"
+  printf "   │ %-20s %10s │\n" "Skipped (unchanged):" "${files_skipped}"
+  printf "   │ %-20s %10s │\n" "Total files:" "$((files_pushed + files_skipped))"
+  echo "   └─────────────────────────────────┘"
+  echo ""
+  log "✅ Push complete"
 }
 
 # ─── Pull: Download changed files from pCloud ─────────────────────────
 
 do_pull() {
-  echo "☁️  Pulling from pCloud..."
+  echo "☁️  Pulling from pCloud... ($(timestamp))"
 
   local remote_files
   remote_files=$(list_remote_files)
@@ -427,6 +572,7 @@ do_pull() {
   fi
 
   local files_pulled=0
+  local files_new=0
   local files_skipped=0
 
   while IFS= read -r remote_path; do
@@ -441,6 +587,11 @@ do_pull() {
     fi
 
     local local_path="${BRAIN_DIR}${remote_path}"
+    local is_new_file=false
+
+    if [[ ! -f "${local_path}" ]]; then
+      is_new_file=true
+    fi
 
     # Check if local file exists and compare SHA
     if [[ -f "${local_path}" ]]; then
@@ -461,17 +612,28 @@ do_pull() {
       new_sha=$(local_sha256 "${local_path}")
       update_manifest "${remote_path}" "${new_sha}"
       files_pulled=$((files_pulled + 1))
+      if [[ "${is_new_file}" == true ]]; then
+        files_new=$((files_new + 1))
+      fi
     }
   done <<< "${remote_files}"
 
-  log ""
-  log "✅ Pulled ${files_pulled} files (${files_skipped} unchanged)"
+  echo ""
+  echo "   ┌─────────────────────────────────┐"
+  echo "   │ Pull Summary                    │"
+  echo "   ├─────────────────────────────────┤"
+  printf "   │ %-20s %10s │\n" "Pulled (updated):" "$((files_pulled - files_new))"
+  printf "   │ %-20s %10s │\n" "Pulled (new):" "${files_new}"
+  printf "   │ %-20s %10s │\n" "Skipped (unchanged):" "${files_skipped}"
+  echo "   └─────────────────────────────────┘"
+  echo ""
+  log "✅ Pull complete"
 }
 
 # ─── Sync: Bidirectional with conflict resolution ─────────────────────
 
 do_sync() {
-  echo "🔄 Bidirectional sync with conflict resolution..."
+  echo "🔄 Bidirectional sync with conflict resolution... ($(timestamp))"
 
   # 1. Prepare tmp directory
   mkdir -p "${TMP_DIR}"
@@ -531,23 +693,26 @@ do_sync() {
       fi
 
       # Both changed — CONFLICT! Download remote to tmp and merge
-      log "⚠ Conflict: ${remote_path}"
+      local local_size remote_size
+      local_size=$(wc -c < "${local_path}" | tr -d ' ')
+      log "⚠ Conflict: ${remote_path} (local: ${local_size} bytes)"
       conflicts=$((conflicts + 1))
 
       mkdir -p "$(dirname "${tmp_path}")"
       if ! download_file "${remote_path}" "${tmp_path}"; then
         continue
       fi
+      remote_size=$(wc -c < "${tmp_path}" | tr -d ' ')
 
       # Merge based on file type
       case "${remote_path}" in
         /sessions/*.md)
           merge_session_md "${local_path}" "${tmp_path}" "${local_path}"
-          log "   🔀 Merged session log"
+          log "   🔀 Merged session log (append dedup)"
           ;;
         *.md)
           merge_general_md "${local_path}" "${tmp_path}" "${local_path}"
-          log "   🔀 Merged markdown"
+          log "   🔀 Merged markdown (section merge, local: ${local_size}b, remote: ${remote_size}b)"
           ;;
         *)
           # For other files, remote wins
@@ -565,7 +730,7 @@ do_sync() {
 
   # 4. Rebuild brain.db from merged markdown files
   #    brain.db is a derived artifact — never merged directly
-  log ""
+  echo ""
   log "🧠 Rebuilding brain.db from merged markdown..."
   rm -f "${BRAIN_DIR}/brain.db" "${BRAIN_DIR}/brain.db-wal" "${BRAIN_DIR}/brain.db-shm"
 
@@ -578,8 +743,13 @@ do_sync() {
   do_push
 
   if [[ ${conflicts} -gt 0 ]]; then
-    log ""
-    log "🔀 Resolved ${merged}/${conflicts} conflicts"
+    echo ""
+    echo "   ┌─────────────────────────────────┐"
+    echo "   │ Conflict Resolution             │"
+    echo "   ├─────────────────────────────────┤"
+    printf "   │ %-20s %10s │\n" "Conflicts detected:" "${conflicts}"
+    printf "   │ %-20s %10s │\n" "Auto-merged:" "${merged}"
+    echo "   └─────────────────────────────────┘"
   fi
 }
 
@@ -595,11 +765,15 @@ case "${MODE}" in
   sync)
     do_sync
     ;;
+  status)
+    do_status
+    ;;
   *)
-    echo "Usage: sync.sh [push|pull|sync]"
-    echo "  push  — Upload changed files to pCloud (incremental)"
-    echo "  pull  — Download changed files from pCloud (incremental)"
-    echo "  sync  — Bidirectional sync with conflict resolution"
+    echo "Usage: sync.sh [push|pull|sync|status]"
+    echo "  push   — Upload changed files to pCloud (incremental)"
+    echo "  pull   — Download changed files from pCloud (incremental)"
+    echo "  sync   — Bidirectional sync with conflict resolution"
+    echo "  status — Preview what would change (dry-run, no writes)"
     exit 1
     ;;
 esac

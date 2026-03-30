@@ -159,6 +159,24 @@ EOF
   echo "   📝 Created USER.md"
 fi
 
+if [[ ! -f "${BRAIN_DIR}/STATE.md" ]]; then
+  cat > "${BRAIN_DIR}/STATE.md" << 'EOF'
+# Active State
+
+> Updated: (auto-updated by agent)
+
+## Current Focus
+
+
+## Working Context
+
+
+## Scratch Pad
+
+EOF
+  echo "   📝 Created STATE.md"
+fi
+
 # 5. Initialize SQLite database
 echo ""
 echo "🗄️  Initializing brain.db..."
@@ -188,9 +206,11 @@ fi
 # 7. Offer to install global workflows
 echo ""
 echo "📋 Agent Brain includes global workflows for your AI agent:"
-echo "   • /save-brain — Flush session memory (local only)"
-echo "   • /sync-brain — Sync memory to/from pCloud (incremental)"
-echo "   • /load-brain — Load cross-session memory into context"
+echo "   • /save-brain     — Flush session memory (local only)"
+echo "   • /upload-brain   — Push local changes to pCloud"
+echo "   • /download-brain — Pull cloud changes to local"
+echo "   • /sync-brain     — Bidirectional pCloud sync (with conflict resolution)"
+echo "   • /load-brain     — Load cross-session memory into context"
 echo ""
 read -r -p "   Install workflows to ~/.agent/workflows/? [Y/n] " INSTALL_WF
 INSTALL_WF="${INSTALL_WF:-Y}"
@@ -208,4 +228,10 @@ echo ""
 echo "🧠 Agent Brain bootstrap complete!"
 echo "   Local:  ${BRAIN_DIR}/"
 echo "   Remote: pCloud /agent-brain/"
+echo ""
+echo "   Memory Ontology:"
+echo "   • IDENTITY  → USER.md     (who the user is)"
+echo "   • KNOWLEDGE → MEMORY.md   (durable facts)"
+echo "   • EXPERIENCE→ sessions/   (what happened)"
+echo "   • STATE     → STATE.md    (current work context, local only)"
 echo ""
