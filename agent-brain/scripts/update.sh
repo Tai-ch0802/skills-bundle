@@ -8,13 +8,22 @@
 #
 # Usage:
 #   bash agent-brain/scripts/update.sh          # from repo root
-#   bash ~/.gemini/antigravity/skills/agent-brain/scripts/update.sh  # from installed location
+#   bash ~/Documents/.../agent-brain/scripts/update.sh  # from full path
 #
 set -euo pipefail
 
 # ─── Detect source directory ──────────────────────────────────────────
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SKILL_SRC="$(cd "${SCRIPT_DIR}/.." && pwd)"
+INSTALLED_SKILL="${HOME}/.gemini/antigravity/skills/agent-brain"
+
+# Validate that this is being run from the repo, not the installed destination
+if [[ "${SKILL_SRC}" == "${INSTALLED_SKILL}" ]]; then
+  echo "❌ Error: You are running this script from the installed location itself."
+  echo "   Please run it from your source repository instead, for example:"
+  echo "   bash ~/Documents/personal/repo/skills-bundle/agent-brain/scripts/update.sh"
+  exit 1
+fi
 
 # Validate that this looks like the agent-brain skill directory
 if [[ ! -f "${SKILL_SRC}/SKILL.md" ]]; then
@@ -24,7 +33,6 @@ if [[ ! -f "${SKILL_SRC}/SKILL.md" ]]; then
 fi
 
 # ─── Target directories ──────────────────────────────────────────────
-INSTALLED_SKILL="${HOME}/.gemini/antigravity/skills/agent-brain"
 WORKFLOW_DIR="${HOME}/.agent/workflows"
 BRAIN_DIR="${HOME}/.agent-brain"
 
