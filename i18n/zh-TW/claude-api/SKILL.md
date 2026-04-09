@@ -1,6 +1,6 @@
 ---
 name: claude-api
-description: 使用 Claude API 或 Anthropic SDK 建構應用程式。觸發條件：程式碼匯入 `anthropic`/`@anthropic-ai/sdk`/`claude_agent_sdk`，或使用者要求使用 Claude API、Anthropic SDK 或 Agent SDK。不觸發條件：程式碼匯入 `openai`/其他 AI SDK、一般程式設計或 ML/資料科學任務。
+description: 使用 Claude API / Anthropic SDK 建構、除錯和最佳化應用程式。使用此技能建構的應用程式應包含提示詞快取。觸發時機：程式碼匯入 anthropic/@anthropic-ai/sdk；使用者要求使用 Claude API、Anthropic SDK 或管理代理 (/v1/agents, /v1/sessions, /v1/environments)。不要觸發時機：程式碼匯入 `openai`/其他 AI SDK、一般程式設計或 ML/資料科學任務。
 license: 完整條款請見 LICENSE.txt
 ---
 # 使用 Claude 建構 LLM 驅動的應用程式
