@@ -1,6 +1,6 @@
 ---
 name: claude-api
-description: 使用 Claude API / Anthropic SDK 建構、除錯和最佳化應用程式。使用此技能建構的應用程式應包含提示詞快取。觸發時機：程式碼匯入 anthropic/@anthropic-ai/sdk；使用者要求使用 Claude API、Anthropic SDK 或管理代理 (/v1/agents, /v1/sessions, /v1/environments)。不要觸發時機：程式碼匯入 `openai`/其他 AI SDK、一般程式設計或 ML/資料科學任務。
+description: 使用 Claude API / Anthropic SDK 建構、除錯和最佳化應用程式。使用此技能建構的應用程式應包含提示快取 (prompt caching)。觸發時機：程式碼匯入 anthropic/@anthropic-ai/sdk；使用者要求使用 Claude API、Anthropic SDKs 或 Managed Agents (/v1/agents, /v1/sessions, /v1/environments)。不要觸發時機：程式碼匯入 `openai`/其他 AI SDK、一般程式設計，或機器學習/資料科學任務。
 license: 完整條款請見 LICENSE.txt
 ---
 # 使用 Claude 建構 LLM 驅動的應用程式
@@ -119,6 +119,73 @@ license: 完整條款請見 LICENSE.txt
 
 ---
 
+
+## 架構
+
+一切皆透過 `POST /v1/messages` 進行。工具和輸出限制是此單一端點的功能 — 而非獨立的 API。
+
+**使用者定義的工具** — 你定義工具（透過裝飾器、Zod schema 或原始 JSON），而 SDK 的工具執行器會負責呼叫 API、執行你的函式，並循環運作直到 Claude 完成。為了獲得完全的控制權，你也可以手動編寫此循環。
+
+**伺服器端工具** — 在 Anthropic 基礎設施上執行的由 Anthropic 託管的工具。程式碼執行完全是伺服器端的（在 `tools` 中宣告它，Claude 就會自動執行程式碼）。電腦使用可以是伺服器託管或自託管的。
+
+**結構化輸出** — 限制 Messages API 回應格式（`output_config.format`）和/或工具參數驗證（`strict: true`）。建議的方法是使用 `client.messages.parse()`，它會自動根據你的 schema 驗證回應。注意：舊的 `output_format` 參數已棄用；請在 `messages.create()` 上使用 `output_config: {format: {...}}`。
+
+**支援端點** — 批次（`POST /v1/messages/batches`）、檔案（`POST /v1/files`）、Token 計數，以及模型（`GET /v1/models`、`GET /v1/models/{id}` — 即時功能/上下文窗口發現）可提供或支援 Messages API 請求。
+
+---
+
+## 當前模型 (快取: 2026-02-17)
+
+| 模型                | 模型 ID             | 上下文          | 輸入 $/1M | 輸出 $/1M |
+| ----------------- | ------------------- | -------------- | ---------- | ----------- |
+| Claude Opus 4.6   | `claude-opus-4-6`   | 200K (1M beta) | $5.00      | $25.00      |
+| Claude Sonnet 4.6 | `claude-sonnet-4-6` | 200K (1M beta) | $3.00      | $15.00      |
+| Claude Haiku 4.5  | `claude-haiku-4-5`  | 200K           | $1.00      | $5.00       |
+
+**除非使用者明確指定不同的模型，否則永遠使用 `claude-opus-4-6`。** 這是不可協商的。除非使用者字面上說「使用 sonnet」或「使用 haiku」，否則請勿使用 `claude-sonnet-4-6`、`claude-sonnet-4-5` 或任何其他模型。永遠不要因為成本而降級 — 這是使用者的決定，不是你的。
+
+**極度重要：請僅使用上表中完全相同的模型 ID 字串 — 它們就這樣使用即可。不要加上日期後綴。** 例如，使用 `claude-sonnet-4-5`，絕對不要使用 `claude-sonnet-4-5-20250514` 或你可能從訓練資料中回想起來的任何其他帶有日期的變體。如果使用者要求使用未在表中的較舊模型（例如「opus 4.5」、「sonnet 3.7」），請閱讀 `shared/models.md` 以獲取確切的 ID — 不要自行建構一個。
+
+附註：如果上面的任何模型字串看起來很陌生，那是正常的 — 這只是意味著它們是在你的訓練資料截止後發布的。請放心，它們是真實的模型；我們不會在這種事情上騙你。
+
+**即時功能查詢：** 上表是快取的。當使用者詢問「X 的上下文窗口為何」、「X 支援視覺/思考/努力程度嗎」或「哪些模型支援 Y」時，請查詢 Models API（`client.models.retrieve(id)` / `client.models.list()`）— 請參見 `shared/models.md` 以獲取欄位參考和功能篩選範例。
+
+---
+
+## 思考與努力程度 (快速參考)
+
+**Opus 4.6 — 自適應思考 (建議)：** 使用 `thinking: {type: "adaptive"}`。Claude 會動態決定何時及思考多少。不需要 `budget_tokens` — `budget_tokens` 在 Opus 4.6 和 Sonnet 4.6 上已棄用，絕不可使用。自適應思考也會自動啟用交錯思考 (不需要 beta header)。**當使用者要求「擴展思考」、「思考預算」或 `budget_tokens` 時：請永遠使用 Opus 4.6 與 `thinking: {type: "adaptive"}`。固定的思考 token 預算概念已被棄用 — 自適應思考取代了它。請勿使用 `budget_tokens` 且請勿切換到較舊的模型。**
+
+**努力程度參數 (GA，無 beta header)：** 控制思考深度和整體 token 消耗，透過 `output_config: {effort: "low"|"medium"|"high"|"max"}`（在 `output_config` 內，不是頂層）。預設值為 `high`（等同於省略它）。`max` 僅限 Opus 4.6。適用於 Opus 4.5、Opus 4.6 和 Sonnet 4.6。在 Sonnet 4.5 / Haiku 4.5 上會發生錯誤。與自適應思考結合使用，以獲得最佳的成本與品質權衡。較低的努力程度意味著更少且更整併的工具呼叫、較少的前言，以及更簡潔的確認 — `medium` 通常是個不錯的平衡；當正確性比成本更重要時使用 `max`；為子代理或簡單任務使用 `low`。
+
+**Sonnet 4.6：** 支援自適應思考（`thinking: {type: "adaptive"}`）。`budget_tokens` 在 Sonnet 4.6 上已棄用 — 請改用自適應思考。
+
+**較舊模型 (僅當明確要求時)：** 如果使用者特別要求 Sonnet 4.5 或其他較舊模型，請使用 `thinking: {type: "enabled", budget_tokens: N}`。`budget_tokens` 必須小於 `max_tokens`（最小值為 1024）。永遠不要只因為使用者提到 `budget_tokens` 就選擇較舊的模型 — 請改用 Opus 4.6 與自適應思考。
+
+---
+
+## 壓縮 (快速參考)
+
+**Beta，Opus 4.6 和 Sonnet 4.6。** 對於可能超過 200K 上下文窗口的長時間對話，請啟用伺服器端壓縮。API 會在接近觸發閾值（預設值：150K tokens）時自動總結早期的上下文。需要 beta header `compact-2026-01-12`。
+
+**極度重要：** 在每一輪都要將 `response.content`（不只是文字）附加回你的訊息中。回應中的壓縮區塊必須保留 — API 會使用它們在下一個請求時取代已壓縮的歷史記錄。僅萃取文本字串並附加它將會默默遺失壓縮狀態。
+
+請參見 `{lang}/claude-api/README.md`（壓縮區塊）以獲取程式碼範例。可透過 WebFetch 取得 `shared/live-sources.md` 中的完整文件。
+
+---
+
+## 提示詞快取 (快速參考)
+
+**前綴比對 (Prefix match)。** 前綴任何地方的任何位元組變更都會使之後的所有內容失效。渲染順序為 `tools` → `system` → `messages`。將穩定的內容放在前面（凍結的系統提示、確定性的工具列表），將不穩定的內容（時間戳記、每次請求的 ID、不同的問題）放在最後一個 `cache_control` 斷點之後。
+
+**頂層自動快取**（在 `messages.create()` 上的 `cache_control: {type: "ephemeral"}`）是當你不需要細粒度放置時最簡單的選項。每次請求最多 4 個斷點。最小可快取前綴為 ~1024 個 token — 較短的前綴默默地不會被快取。
+
+**使用 `usage.cache_read_input_tokens` 進行驗證** — 如果它在重複請求中為零，表示存在無聲的失效因子（系統提示中的 `datetime.now()`、未排序的 JSON、不同的工具集）。
+
+對於放置模式、架構指導以及無聲失效審查清單：請閱讀 `shared/prompt-caching.md`。語言特定的語法：`{lang}/claude-api/README.md`（提示詞快取區塊）。
+
+---
+
 ## 管理代理（Managed Agents - Beta 版）
 
 使用管理代理時，API 會透過在它為你代管的沙盒環境中執行檔案操作、bash 指令和自訂程式碼（透過技能或 MCP）來自主解決問題。與基於用戶端的工具循環不同，你只需傳送一次初始請求，並以串流接收結果，伺服器會處理工具循環直到完成或需要你的輸入（審查或工具錯誤）。
@@ -143,55 +210,56 @@ license: 完整條款請見 LICENSE.txt
 
 ---
 
+
 ## 閱讀指南
 
-偵測語言後，根據使用者需求閱讀相關檔案：
+在偵測到語言後，請根據使用者的需求閱讀相關檔案：
 
 ### 快速任務參考
 
-**單一文字分類/摘要/擷取/問答：**
+**單一文本分類/總結/擷取/問答：**
 → 僅閱讀 `{lang}/claude-api/README.md`
 
 **聊天 UI 或即時回應顯示：**
 → 閱讀 `{lang}/claude-api/README.md` + `{lang}/claude-api/streaming.md`
 
-**長時間對話（可能超過上下文窗口）：**
-→ 閱讀 `{lang}/claude-api/README.md` — 參見壓縮章節
+**長時間對話 (可能超過上下文窗口)：**
+→ 閱讀 `{lang}/claude-api/README.md` — 請參見壓縮區段 (Compaction)
 
-**提示詞快取（Prompt caching）/ 最佳化快取 / 「為什麼我的快取命中率很低」：**
-→ 閱讀 `shared/prompt-caching.md` + `{lang}/claude-api/README.md`（提示詞快取章節）
+**提示詞快取 / 最佳化快取 / 「為什麼我的快取命中率很低」：**
+→ 閱讀 `shared/prompt-caching.md` + `{lang}/claude-api/README.md` (提示詞快取區段)
 
-**函數呼叫/工具使用/代理：**
+**函式呼叫 / 工具使用 / 代理：**
 → 閱讀 `{lang}/claude-api/README.md` + `shared/tool-use-concepts.md` + `{lang}/claude-api/tool-use.md`
 
-**代理設計（Agent design - 工具介面、上下文管理、快取策略）：**
+**代理設計 (工具介面、上下文管理、快取策略)：**
 → 閱讀 `shared/agent-design.md`
 
-**批次處理（非延遲敏感）：**
+**批次處理 (對延遲不敏感)：**
 → 閱讀 `{lang}/claude-api/README.md` + `{lang}/claude-api/batches.md`
 
-**跨多個請求的檔案上傳：**
+**跨多個請求上傳檔案：**
 → 閱讀 `{lang}/claude-api/README.md` + `{lang}/claude-api/files-api.md`
 
-**管理代理（Managed Agents - 帶有工作區的伺服器管理有狀態代理）：**
-→ 閱讀 `shared/managed-agents-overview.md` + 其餘的 `shared/managed-agents-*.md` 檔案。對於 Python、TypeScript、Go、Ruby、PHP 和 Java，閱讀 `{lang}/managed-agents/README.md` 獲取程式碼範例。對於 cURL，閱讀 `curl/managed-agents.md`。**代理是持久的 — 建立一次，依 ID 引用。** 儲存由 `agents.create` 回傳的代理 ID，並將其傳遞給後續所有的 `sessions.create`；不要在請求路徑中呼叫 `agents.create`。Anthropic CLI 是一種從版本控制的 YAML（URL 位於 `shared/live-sources.md`）建立代理和環境的便捷方式。如果你需要的綁定沒有顯示在語言 README 中，請從 `shared/live-sources.md` WebFetch 相關項目，而不是猜測。C# 目前不支援管理代理 — 請使用 `curl/managed-agents.md` 中的原始 HTTP 作為參考。
+**管理代理 (具有工作區的伺服器管理有狀態代理)：**
+→ 閱讀 `shared/managed-agents-overview.md` + 其餘的 `shared/managed-agents-*.md` 檔案。對於 Python、TypeScript、Go、Ruby、PHP 和 Java，請閱讀 `{lang}/managed-agents/README.md` 以獲取程式碼範例。對於 cURL，請閱讀 `curl/managed-agents.md`。**代理是持久的 — 建立一次，透過 ID 參照。** 儲存 `agents.create` 回傳的代理 ID，並將其傳遞給每一個後續的 `sessions.create`；不要在請求路徑中呼叫 `agents.create`。Anthropic CLI 是一種從版本控制的 YAML 建立代理和環境的便利方式（URL 在 `shared/live-sources.md` 中）。如果你需要的綁定未在語言 README 中顯示，請從 `shared/live-sources.md` WebFetch 相關項目，而非猜測。C# 目前不支援管理代理 — 請使用 `curl/managed-agents.md` 中的原始 HTTP 作為參考。
 
-### Claude API（完整檔案參考）
+### Claude API (完整檔案參考)
 
-閱讀**語言特定的 Claude API 資料夾**（`{language}/claude-api/`）：
+閱讀 **語言特定的 Claude API 資料夾** (`{language}/claude-api/`)：
 
-1. **`{language}/claude-api/README.md`** — **先閱讀此檔。** 安裝、快速入門、常見模式、錯誤處理。
-2. **`shared/tool-use-concepts.md`** — 當使用者需要函數呼叫、程式碼執行、記憶或結構化輸出時閱讀。涵蓋概念基礎。
-3. **`shared/agent-design.md`** — 設計代理時閱讀：bash 與專用工具、編程工具呼叫、工具搜尋/技能、上下文編輯與壓縮與記憶、快取原則。
-4. **`{language}/claude-api/tool-use.md`** — 語言特定工具使用程式碼範例（工具執行器、手動循環、程式碼執行、記憶、結構化輸出）。
-5. **`{language}/claude-api/streaming.md`** — 建構逐步顯示回應的聊天 UI 或介面時閱讀。
-6. **`{language}/claude-api/batches.md`** — 離線處理大量請求（非延遲敏感）時閱讀。以 50% 成本非同步執行。
-7. **`{language}/claude-api/files-api.md`** — 跨多個請求發送同一檔案而不重新上傳時閱讀。
-8. **`shared/prompt-caching.md`** — 當加入或最佳化提示詞快取時閱讀。涵蓋前綴穩定性設計、斷點放置，以及會靜默使快取失效的反模式。
-9. **`shared/error-codes.md`** — 除錯 HTTP 錯誤或實作錯誤處理時閱讀。
-10. **`shared/live-sources.md`** — 取得最新官方文件的 WebFetch URL。
+1. **`{language}/claude-api/README.md`** — **請先閱讀此檔。** 安裝、快速開始、常見模式、錯誤處理。
+2. **`shared/tool-use-concepts.md`** — 當使用者需要函式呼叫、程式碼執行、記憶體或結構化輸出時閱讀。涵蓋概念基礎。
+3. **`shared/agent-design.md`** — 當設計代理時閱讀：bash 與專用工具比較、程式化工具呼叫、工具搜尋/技能、上下文編輯與壓縮與記憶體比較、快取原則。
+4. **`{language}/claude-api/tool-use.md`** — 閱讀語言特定的工具使用程式碼範例（工具執行器、手動循環、程式碼執行、記憶體、結構化輸出）。
+5. **`{language}/claude-api/streaming.md`** — 當建構聊天 UI 或增量顯示回應的介面時閱讀。
+6. **`{language}/claude-api/batches.md`** — 當離線處理許多請求（對延遲不敏感）時閱讀。非同步執行並節省 50% 成本。
+7. **`{language}/claude-api/files-api.md`** — 當在多個請求中傳送相同檔案而不重新上傳時閱讀。
+8. **`shared/prompt-caching.md`** — 當添加或最佳化提示詞快取時閱讀。涵蓋前綴穩定性設計、斷點放置，以及會默默使快取失效的反面模式。
+9. **`shared/error-codes.md`** — 當對 HTTP 錯誤進行除錯或實作錯誤處理時閱讀。
+10. **`shared/live-sources.md`** — 用於擷取最新官方文件的 WebFetch URL。
 
-> **注意：** Java、Go、Ruby、C#、PHP 和 cURL — 各有一個涵蓋所有基礎的單一檔案。根據需要閱讀該檔案加上 `shared/tool-use-concepts.md` 和 `shared/error-codes.md`。
+> **注意：** 對於 Java、Go、Ruby、C#、PHP 和 cURL — 這些各有一個單一檔案涵蓋所有基礎知識。閱讀該檔案，並視需要閱讀 `shared/tool-use-concepts.md` 和 `shared/error-codes.md`。
 
 > **注意：** 有關管理代理檔案參考，請參見上方的 `## 管理代理（Managed Agents - Beta 版）` 區塊 — 它列出了每個 `shared/managed-agents-*.md` 檔案和語言特定的 README。
 
@@ -210,12 +278,12 @@ license: 完整條款請見 LICENSE.txt
 ## 常見陷阱
 
 - 將檔案或內容傳遞給 API 時不要截斷輸入。如果內容太長無法放入上下文窗口，通知使用者並討論選項（分塊、摘要等）而非靜默截斷。
-- **Opus 4.6 / Sonnet 4.6 思維：** 使用 `thinking: {type: "adaptive"}` — 不要使用 `budget_tokens`（在 Opus 4.6 和 Sonnet 4.6 上已棄用）。舊模型的 `budget_tokens` 必須小於 `max_tokens`（最少 1024）。這如果設定錯誤會拋出錯誤。
+- **Opus 4.6 / Sonnet 4.6 思考：** 使用 `thinking: {type: "adaptive"}` — 不要使用 `budget_tokens`（在 Opus 4.6 和 Sonnet 4.6 上已棄用）。舊模型的 `budget_tokens` 必須小於 `max_tokens`（最少 1024）。這如果設定錯誤會拋出錯誤。
 - **Opus 4.6 prefill 已移除：** 助手訊息 prefill (last-assistant-turn prefills) 在 Opus 4.6 上回傳 400 錯誤。改用結構化輸出（`output_config.format`）或系統提示指令來控制回應格式。
 - **`max_tokens` 預設值：** 不要低估 `max_tokens` — 達到上限會使輸出在中途被截斷，並需要重試。對於非串流請求，預設為 `~16000`（保持回應在 SDK HTTP 超時限制內）。對於串流請求，預設為 `~64000`（不需擔心超時，給予模型更多空間）。除非有明確理由（例如分類任務約 `~256`、成本上限或故意要求簡短輸出），否則不要設定更低的值。
 - **128K 輸出 tokens：** Opus 4.6 支援最多 128K `max_tokens`，但 SDK 對大型 `max_tokens` 需要串流以避免 HTTP 超時。使用 `.stream()` 搭配 `.get_final_message()` / `.finalMessage()`。
-- **工具呼叫 JSON 解析（Opus 4.6）：** Opus 4.6 可能在工具呼叫 `input` 欄位中產生不同的 JSON 字串跳脫 (例如，Unicode 或正斜線跳脫)。始終使用 `json.loads()` / `JSON.parse()` 解析工具輸入 — 絕不對序列化的輸入做原始字串比對。
-- **結構化輸出（所有模型）：** 在 `messages.create()` 上使用 `output_config: {format: {...}}` 而非已棄用的 `output_format` 參數。這是一個通用的 API 變更，不僅限於 4.6 版。
+- **工具呼叫 JSON 解析 (Opus 4.6)：** Opus 4.6 可能在工具呼叫 `input` 欄位中產生不同的 JSON 字串跳脫 (例如，Unicode 或正斜線跳脫)。始終使用 `json.loads()` / `JSON.parse()` 解析工具輸入 — 絕不對序列化的輸入做原始字串比對。
+- **結構化輸出 (所有模型)：** 在 `messages.create()` 上使用 `output_config: {format: {...}}` 而非已棄用的 `output_format` 參數。這是一個通用的 API 變更，不僅限於 4.6 版。
 - **不要重新實作 SDK 功能：** SDK 提供高階輔助方法 — 使用它們而非從頭建構。具體來說：使用 `stream.finalMessage()` 而非將 `.on()` 事件包裝在 `new Promise()` 中；使用強型別例外類別（例如 `Anthropic.RateLimitError`）而非對錯誤訊息進行字串比對；使用 SDK 型別（`Anthropic.MessageParam`、`Anthropic.Tool`、`Anthropic.Message` 等）而非重新定義等效的介面。
 - **不要為 SDK 資料結構定義自訂型別：** SDK 匯出所有 API 物件的型別。訊息請使用 `Anthropic.MessageParam`，工具定義請使用 `Anthropic.Tool`，工具結果請使用 `Anthropic.ToolUseBlock` / `Anthropic.ToolResultBlockParam`，回應請使用 `Anthropic.Message`。自行定義 `interface ChatMessage { role: string; content: unknown }` 會重複 SDK 已提供的內容並失去型別安全。
 - **報告和文件輸出：** 程式碼執行沙盒預裝了 `python-docx`、`python-pptx`、`matplotlib`、`pillow` 和 `pypdf`。Claude 可以生成格式化檔案（DOCX、PDF、圖表）並透過 Files API 回傳 — 考慮針對「報告」或「文件」類型的請求使用此方法，而不是純粹的 stdout 文本。
