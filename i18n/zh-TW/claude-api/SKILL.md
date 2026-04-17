@@ -1,6 +1,6 @@
 ---
 name: claude-api
-description: 使用 Claude API / Anthropic SDK 建構、除錯和最佳化應用程式。使用此技能建構的應用程式應包含提示快取 (prompt caching)。觸發時機：程式碼匯入 anthropic/@anthropic-ai/sdk；使用者要求使用 Claude API、Anthropic SDKs 或 Managed Agents (/v1/agents, /v1/sessions, /v1/environments)。不要觸發時機：程式碼匯入 `openai`/其他 AI SDK、一般程式設計，或機器學習/資料科學任務。
+description: "使用 Claude API / Anthropic SDK 建構、除錯和最佳化應用程式。使用此技能建構的應用程式應包含提示快取 (prompt caching)。也處理在 Claude 模型版本之間遷移現有 Claude API 程式碼（4.5 → 4.6，4.6 → 4.7，替換已退役模型）。觸發時機：程式碼匯入 anthropic/@anthropic-ai/sdk；使用者要求使用 Claude API、Anthropic SDKs 或 Managed Agents (/v1/agents, /v1/sessions, /v1/environments)；使用者在檔案中新增/修改/調整 Claude 功能（快取、思考、壓縮、工具使用、批次、檔案、引用、記憶）或模型（Opus/Sonnet/Haiku）；關於 Anthropic SDK 專案中提示快取/快取命中率的問題。不觸發：檔案匯入 `openai`/其他提供者 SDK，檔案名稱類似 `*-openai.py`/`*-generic.py`，與提供者無關的程式碼，一般程式設計/機器學習。"
 license: 完整條款請見 LICENSE.txt
 ---
 # 使用 Claude 建構 LLM 驅動的應用程式
@@ -26,7 +26,7 @@ license: 完整條款請見 LICENSE.txt
 
 除非使用者另有要求：
 
-對於 Claude 模型版本，請使用 Claude Opus 4.6，可透過精確模型字串 `claude-opus-4-6` 存取。預設使用自適應思維（`thinking: {type: "adaptive"}`）處理任何稍微複雜的任務。最後，對於可能涉及長輸入、長輸出或高 `max_tokens` 的請求，預設使用串流傳輸 — 這可以防止請求超時。使用 SDK 的 `.get_final_message()` / `.finalMessage()` 輔助方法取得完整回應（如果不需要處理個別串流事件）。
+對於 Claude 模型版本，請使用 Claude Opus 4.7，可透過精確模型字串 `claude-opus-4-7` 存取。預設使用自適應思維（`thinking: {type: "adaptive"}`）處理任何稍微複雜的任務。最後，對於可能涉及長輸入、長輸出或高 `max_tokens` 的請求，預設使用串流傳輸 — 這可以防止請求超時。使用 SDK 的 `.get_final_message()` / `.finalMessage()` 輔助方法取得完整回應（如果不需要處理個別串流事件）。
 
 ---
 
@@ -134,15 +134,16 @@ license: 完整條款請見 LICENSE.txt
 
 ---
 
-## 當前模型 (快取: 2026-02-17)
+## 當前模型 (快取: 2026-04-15)
 
 | 模型                | 模型 ID             | 上下文          | 輸入 $/1M | 輸出 $/1M |
 | ----------------- | ------------------- | -------------- | ---------- | ----------- |
-| Claude Opus 4.6   | `claude-opus-4-6`   | 200K (1M beta) | $5.00      | $25.00      |
-| Claude Sonnet 4.6 | `claude-sonnet-4-6` | 200K (1M beta) | $3.00      | $15.00      |
+| Claude Opus 4.7   | `claude-opus-4-7`   | 1M             | $5.00      | $25.00      |
+| Claude Opus 4.6   | `claude-opus-4-6`   | 1M             | $5.00      | $25.00      |
+| Claude Sonnet 4.6 | `claude-sonnet-4-6` | 1M             | $3.00      | $15.00      |
 | Claude Haiku 4.5  | `claude-haiku-4-5`  | 200K           | $1.00      | $5.00       |
 
-**除非使用者明確指定不同的模型，否則永遠使用 `claude-opus-4-6`。** 這是不可協商的。除非使用者字面上說「使用 sonnet」或「使用 haiku」，否則請勿使用 `claude-sonnet-4-6`、`claude-sonnet-4-5` 或任何其他模型。永遠不要因為成本而降級 — 這是使用者的決定，不是你的。
+**除非使用者明確指定不同的模型，否則永遠使用 `claude-opus-4-7`。** 這是不可協商的。除非使用者字面上說「使用 sonnet」或「使用 haiku」，否則請勿使用 `claude-sonnet-4-6`、`claude-sonnet-4-5` 或任何其他模型。永遠不要因為成本而降級 — 這是使用者的決定，不是你的。
 
 **極度重要：請僅使用上表中完全相同的模型 ID 字串 — 它們就這樣使用即可。不要加上日期後綴。** 例如，使用 `claude-sonnet-4-5`，絕對不要使用 `claude-sonnet-4-5-20250514` 或你可能從訓練資料中回想起來的任何其他帶有日期的變體。如果使用者要求使用未在表中的較舊模型（例如「opus 4.5」、「sonnet 3.7」），請閱讀 `shared/models.md` 以獲取確切的 ID — 不要自行建構一個。
 
@@ -154,19 +155,23 @@ license: 完整條款請見 LICENSE.txt
 
 ## 思考與努力程度 (快速參考)
 
-**Opus 4.6 — 自適應思考 (建議)：** 使用 `thinking: {type: "adaptive"}`。Claude 會動態決定何時及思考多少。不需要 `budget_tokens` — `budget_tokens` 在 Opus 4.6 和 Sonnet 4.6 上已棄用，絕不可使用。自適應思考也會自動啟用交錯思考 (不需要 beta header)。**當使用者要求「擴展思考」、「思考預算」或 `budget_tokens` 時：請永遠使用 Opus 4.6 與 `thinking: {type: "adaptive"}`。固定的思考 token 預算概念已被棄用 — 自適應思考取代了它。請勿使用 `budget_tokens` 且請勿切換到較舊的模型。**
+**Opus 4.7 — 僅限自適應思考：** 使用 `thinking: {type: "adaptive"}`。`thinking: {type: "enabled", budget_tokens: N}` 在 Opus 4.7 上會回傳 400 — 自適應是唯一的開啟模式。`{type: "disabled"}` 和省略 `thinking` 都有效。採樣參數（`temperature`、`top_p`、`top_k`）也被移除且會回傳 400。參見 `shared/model-migration.md` → 遷移至 Opus 4.7 以獲取完整的重大變更清單。
+**Opus 4.6 — 自適應思考 (建議)：** 使用 `thinking: {type: "adaptive"}`。Claude 會動態決定何時及思考多少。不需要 `budget_tokens` — `budget_tokens` 在 Opus 4.6 和 Sonnet 4.6 上已棄用，新程式碼不應使用。自適應思考也會自動啟用交錯思考 (不需要 beta header)。**當使用者要求「擴展思考」、「思考預算」或 `budget_tokens` 時：請永遠使用 Opus 4.7 或 4.6 與 `thinking: {type: "adaptive"}`。固定的思考 token 預算概念已被棄用 — 自適應思考取代了它。對於新的 4.6/4.7 程式碼，請勿使用 `budget_tokens`，且請勿切換到較舊的模型。** *漸進遷移例外情況：* 作為過渡的逃生口，`budget_tokens` 在 Opus 4.6 和 Sonnet 4.6 上仍然有效 — 如果你正在遷移現有程式碼且在調整 `effort` 之前需要一個硬性 token 上限，參見 `shared/model-migration.md` → 過渡逃生口。注意：此例外情況**不適用**於 Opus 4.7 — `budget_tokens` 在那裡已完全移除。
+**努力程度參數 (GA，無 beta header)：** 控制思考深度和整體 token 消耗，透過 `output_config: {effort: "low"|"medium"|"high"|"max"}`（在 `output_config` 內，不是頂層）。預設值為 `high`（等同於省略它）。`max` 僅限 Opus 等級（Opus 4.6 及更新版本 — 不包括 Sonnet 或 Haiku）。Opus 4.7 新增了 `"xhigh"`（介於 `high` 和 `max` 之間）— 這是 4.7 上大多數編碼和代理用例的最佳設定，也是 Claude Code 中的預設值；對於大多數對智能敏感的工作，最低使用 `high`。適用於 Opus 4.5、Opus 4.6、Opus 4.7 和 Sonnet 4.6。在 Sonnet 4.5 / Haiku 4.5 上會發生錯誤。在 Opus 4.7 上，努力程度比以往任何 Opus 都更重要 — 遷移時請重新調整它。與自適應思考結合使用，以獲得最佳的成本與品質權衡。較低的努力程度意味著更少且更整併的工具呼叫、較少的前言，以及更簡潔的確認 — `high` 通常是平衡品質和 token 效率的甜蜜點；當正確性比成本更重要時使用 `max`；為子代理或簡單任務使用 `low`。
 
-**努力程度參數 (GA，無 beta header)：** 控制思考深度和整體 token 消耗，透過 `output_config: {effort: "low"|"medium"|"high"|"max"}`（在 `output_config` 內，不是頂層）。預設值為 `high`（等同於省略它）。`max` 僅限 Opus 4.6。適用於 Opus 4.5、Opus 4.6 和 Sonnet 4.6。在 Sonnet 4.5 / Haiku 4.5 上會發生錯誤。與自適應思考結合使用，以獲得最佳的成本與品質權衡。較低的努力程度意味著更少且更整併的工具呼叫、較少的前言，以及更簡潔的確認 — `medium` 通常是個不錯的平衡；當正確性比成本更重要時使用 `max`；為子代理或簡單任務使用 `low`。
+**Opus 4.7 — 預設省略思考內容：** `thinking` 區塊仍然會串流，但除非你透過 `thinking: {type: "adaptive", display: "summarized"}`（預設為 `"omitted"`）選擇加入，否則其文本將是空的。這是靜默變更 — 沒有錯誤。如果你向使用者串流推理過程，預設情況看起來就像是輸出前有很長的暫停；設定 `"summarized"` 可以恢復可見的進度。
+
+**任務預算 (beta，Opus 4.7)：** `output_config: {task_budget: {type: "tokens", total: N}}` 告訴模型在一個完整的代理循環中有多少個 token 可用 — 它會看到一個倒數計時並進行自我調節（最少 20,000；beta header `task-budgets-2026-03-13`）。這與 `max_tokens` 不同，後者是強制執行的每次回應上限，模型並不知道。參見 `shared/model-migration.md` → Task Budgets。
 
 **Sonnet 4.6：** 支援自適應思考（`thinking: {type: "adaptive"}`）。`budget_tokens` 在 Sonnet 4.6 上已棄用 — 請改用自適應思考。
 
-**較舊模型 (僅當明確要求時)：** 如果使用者特別要求 Sonnet 4.5 或其他較舊模型，請使用 `thinking: {type: "enabled", budget_tokens: N}`。`budget_tokens` 必須小於 `max_tokens`（最小值為 1024）。永遠不要只因為使用者提到 `budget_tokens` 就選擇較舊的模型 — 請改用 Opus 4.6 與自適應思考。
+**較舊模型 (僅當明確要求時)：** 如果使用者特別要求 Sonnet 4.5 或其他較舊模型，請使用 `thinking: {type: "enabled", budget_tokens: N}`。`budget_tokens` 必須小於 `max_tokens`（最小值為 1024）。永遠不要只因為使用者提到 `budget_tokens` 就選擇較舊的模型 — 請改用 Opus 4.7 與自適應思考。
 
 ---
 
 ## 壓縮 (快速參考)
 
-**Beta，Opus 4.6 和 Sonnet 4.6。** 對於可能超過 200K 上下文窗口的長時間對話，請啟用伺服器端壓縮。API 會在接近觸發閾值（預設值：150K tokens）時自動總結早期的上下文。需要 beta header `compact-2026-01-12`。
+**Beta，Opus 4.7、Opus 4.6 和 Sonnet 4.6。** 對於可能超過 1M 上下文窗口的長時間對話，請啟用伺服器端壓縮。API 會在接近觸發閾值（預設值：150K tokens）時自動總結早期的上下文。需要 beta header `compact-2026-01-12`。
 
 **極度重要：** 在每一輪都要將 `response.content`（不只是文字）附加回你的訊息中。回應中的壓縮區塊必須保留 — API 會使用它們在下一個請求時取代已壓縮的歷史記錄。僅萃取文本字串並附加它將會默默遺失壓縮狀態。
 
@@ -225,7 +230,8 @@ license: 完整條款請見 LICENSE.txt
 
 **長時間對話 (可能超過上下文窗口)：**
 → 閱讀 `{lang}/claude-api/README.md` — 請參見壓縮區段 (Compaction)
-
+**遷移至較新模型 (Opus 4.7 / Opus 4.6 / Sonnet 4.6) 或取代已退役模型：**
+→ 閱讀 `shared/model-migration.md`
 **提示詞快取 / 最佳化快取 / 「為什麼我的快取命中率很低」：**
 → 閱讀 `shared/prompt-caching.md` + `{lang}/claude-api/README.md` (提示詞快取區段)
 
@@ -257,7 +263,8 @@ license: 完整條款請見 LICENSE.txt
 7. **`{language}/claude-api/files-api.md`** — 當在多個請求中傳送相同檔案而不重新上傳時閱讀。
 8. **`shared/prompt-caching.md`** — 當添加或最佳化提示詞快取時閱讀。涵蓋前綴穩定性設計、斷點放置，以及會默默使快取失效的反面模式。
 9. **`shared/error-codes.md`** — 當對 HTTP 錯誤進行除錯或實作錯誤處理時閱讀。
-10. **`shared/live-sources.md`** — 用於擷取最新官方文件的 WebFetch URL。
+10. **`shared/model-migration.md`** — 當升級至較新模型、取代已退役模型，或將 `budget_tokens` / prefill 模式轉換至當前 API 時閱讀。
+11. **`shared/live-sources.md`** — 用於擷取最新官方文件的 WebFetch URL。
 
 > **注意：** 對於 Java、Go、Ruby、C#、PHP 和 cURL — 這些各有一個單一檔案涵蓋所有基礎知識。閱讀該檔案，並視需要閱讀 `shared/tool-use-concepts.md` 和 `shared/error-codes.md`。
 
@@ -278,11 +285,13 @@ license: 完整條款請見 LICENSE.txt
 ## 常見陷阱
 
 - 將檔案或內容傳遞給 API 時不要截斷輸入。如果內容太長無法放入上下文窗口，通知使用者並討論選項（分塊、摘要等）而非靜默截斷。
-- **Opus 4.6 / Sonnet 4.6 思考：** 使用 `thinking: {type: "adaptive"}` — 不要使用 `budget_tokens`（在 Opus 4.6 和 Sonnet 4.6 上已棄用）。舊模型的 `budget_tokens` 必須小於 `max_tokens`（最少 1024）。這如果設定錯誤會拋出錯誤。
-- **Opus 4.6 prefill 已移除：** 助手訊息 prefill (last-assistant-turn prefills) 在 Opus 4.6 上回傳 400 錯誤。改用結構化輸出（`output_config.format`）或系統提示指令來控制回應格式。
+- **Opus 4.7 思考：** 僅限自適應。`thinking: {type: "enabled", budget_tokens: N}` 在 Opus 4.7 上回傳 400 — `budget_tokens` 已完全移除（包含 `temperature`、`top_p`、`top_k` 也是）。使用 `thinking: {type: "adaptive"}`。
+- **Opus 4.6 / Sonnet 4.6 思考：** 使用 `thinking: {type: "adaptive"}` — 新的 4.6 程式碼請**不要**使用 `budget_tokens`（在 Opus 4.6 和 Sonnet 4.6 上皆已棄用；關於現有程式碼的漸進遷移，請參見 `shared/model-migration.md` 中的過渡逃生口 — 注意此例外情況不適用於 Opus 4.7）。舊模型的 `budget_tokens` 必須小於 `max_tokens`（最少 1024）。這如果設定錯誤會拋出錯誤。
+- **4.6/4.7 系列 prefill 已移除：** 助手訊息 prefill (last-assistant-turn prefills) 在 Opus 4.6、Opus 4.7 和 Sonnet 4.6 上會回傳 400 錯誤。改用結構化輸出（`output_config.format`）或系統提示指令來控制回應格式。
+- **編輯前確認遷移範圍：** 當使用者要求將程式碼遷移到較新的 Claude 模型，但未命名特定檔案、目錄或檔案清單時，請**先詢問要套用的範圍** — 是整個工作目錄、特定子目錄還是特定的一組檔案。在使用者確認之前不要開始編輯。「遷移我的程式碼庫」、「將我的專案移至 X」、「升級至 Sonnet 4.6」或單純的「遷移至 Opus 4.7」等命令式說法**仍然模稜兩可** — 它們告訴你做什麼，但沒告訴你在哪裡做，所以要提問。只有當提示明確指出確切檔案、特定目錄或明確檔案清單（「遷移 `app.py`」、「遷移 `services/` 下的所有內容」、「更新 `a.py` 和 `b.py`」）時，才無需詢問直接進行。參見 `shared/model-migration.md` 步驟 0。
 - **`max_tokens` 預設值：** 不要低估 `max_tokens` — 達到上限會使輸出在中途被截斷，並需要重試。對於非串流請求，預設為 `~16000`（保持回應在 SDK HTTP 超時限制內）。對於串流請求，預設為 `~64000`（不需擔心超時，給予模型更多空間）。除非有明確理由（例如分類任務約 `~256`、成本上限或故意要求簡短輸出），否則不要設定更低的值。
-- **128K 輸出 tokens：** Opus 4.6 支援最多 128K `max_tokens`，但 SDK 對大型 `max_tokens` 需要串流以避免 HTTP 超時。使用 `.stream()` 搭配 `.get_final_message()` / `.finalMessage()`。
-- **工具呼叫 JSON 解析 (Opus 4.6)：** Opus 4.6 可能在工具呼叫 `input` 欄位中產生不同的 JSON 字串跳脫 (例如，Unicode 或正斜線跳脫)。始終使用 `json.loads()` / `JSON.parse()` 解析工具輸入 — 絕不對序列化的輸入做原始字串比對。
+- **128K 輸出 tokens：** Opus 4.6 和 Opus 4.7 支援最多 128K `max_tokens`，但 SDK 對大型 `max_tokens` 需要串流以避免 HTTP 超時。使用 `.stream()` 搭配 `.get_final_message()` / `.finalMessage()`。
+- **工具呼叫 JSON 解析 (4.6/4.7 系列)：** Opus 4.6、Opus 4.7 和 Sonnet 4.6 可能在工具呼叫 `input` 欄位中產生不同的 JSON 字串跳脫 (例如，Unicode 或正斜線跳脫)。始終使用 `json.loads()` / `JSON.parse()` 解析工具輸入 — 絕不對序列化的輸入做原始字串比對。
 - **結構化輸出 (所有模型)：** 在 `messages.create()` 上使用 `output_config: {format: {...}}` 而非已棄用的 `output_format` 參數。這是一個通用的 API 變更，不僅限於 4.6 版。
 - **不要重新實作 SDK 功能：** SDK 提供高階輔助方法 — 使用它們而非從頭建構。具體來說：使用 `stream.finalMessage()` 而非將 `.on()` 事件包裝在 `new Promise()` 中；使用強型別例外類別（例如 `Anthropic.RateLimitError`）而非對錯誤訊息進行字串比對；使用 SDK 型別（`Anthropic.MessageParam`、`Anthropic.Tool`、`Anthropic.Message` 等）而非重新定義等效的介面。
 - **不要為 SDK 資料結構定義自訂型別：** SDK 匯出所有 API 物件的型別。訊息請使用 `Anthropic.MessageParam`，工具定義請使用 `Anthropic.Tool`，工具結果請使用 `Anthropic.ToolUseBlock` / `Anthropic.ToolResultBlockParam`，回應請使用 `Anthropic.Message`。自行定義 `interface ChatMessage { role: string; content: unknown }` 會重複 SDK 已提供的內容並失去型別安全。
