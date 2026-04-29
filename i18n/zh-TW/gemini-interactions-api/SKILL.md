@@ -293,9 +293,9 @@ for await (const chunk of stream) {
 
 ### 安裝 MCP 時（建議使用）
 
-如果可用 **`search_documentation`** 工具（來自 Google MCP 伺服器），請將其作為您的**唯一**文件來源：
+如果可用 **`search_docs`** 工具（來自 Google MCP 伺服器），請將其作為您的**唯一**文件來源：
 
-1. 使用您的查詢呼叫 `search_documentation`
+1. 使用您的查詢呼叫 `search_docs`
 2. 閱讀傳回的文件
 3. **信任 MCP 結果** 作為 API 詳細資訊的真實來源 — 它們始終是最新的。
 
