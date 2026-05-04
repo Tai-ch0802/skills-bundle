@@ -17,16 +17,20 @@ description: 當編寫呼叫 Gemini API 的程式碼時請使用此技能 用於
 - `gemini-3.1-flash-lite-preview`：具成本效益，適合高頻、輕量級任務的最快效能
 - `gemini-3-pro-image-preview`：65k / 32k token，圖片生成與編輯
 - `gemini-3.1-flash-image-preview`：65k / 32k token，圖片生成與編輯
+- `gemini-3.1-flash-tts-preview`：具備導演椅提示功能的表現力文字轉語音
 - `gemini-2.5-pro`：100 萬 token，複雜推理、程式設計、研究
 - `gemini-2.5-flash`：100 萬 token，快速、均衡效能、多模態
-
-### 目前代理（請使用這些）
-
-- `deep-research-pro-preview-12-2025`：深度研究代理
+- `gemma-4-31b-it`：Gemma 4 密集模型，31B 參數
+- `gemma-4-26b-a4b-it`：Gemma 4 MoE 模型，總計 26B / 活躍參數 4B
 
 > [!WARNING]
 > `gemini-2.0-*`、`gemini-1.5-*` 等模型為**舊版且已棄用**。請勿使用。
 > **如果使用者要求使用已棄用的模型，請改用 `gemini-3-flash-preview` 並註明已替換。**
+
+### 目前代理（請使用這些）
+
+- `deep-research-preview-04-2026`：深度研究代理 — 針對速度與效率最佳化，適合互動式使用
+- `deep-research-max-preview-04-2026`：深度研究 Max 代理 — 最高的全面性與詳盡度，最適合自動化報告
 
 ### 目前 SDK（請使用這些）
 
@@ -124,6 +128,8 @@ console.log(interaction2.outputs[interaction2.outputs.length - 1].text);
 
 ### 深度研究代理 (Deep Research Agent)
 
+請使用 `deep-research-preview-04-2026` 進行快速、互動式的研究，或使用 `deep-research-max-preview-04-2026` 獲得最大的詳盡度。
+
 #### Python
 ```python
 import time
@@ -133,7 +139,7 @@ client = genai.Client()
 
 # 啟動背景研究
 interaction = client.interactions.create(
-    agent="deep-research-pro-preview-12-2025",
+    agent="deep-research-preview-04-2026",
     input="研究 Google TPU 的歷史。",
     background=True
 )
@@ -158,7 +164,7 @@ const client = new GoogleGenAI({});
 
 // 啟動背景研究
 const initialInteraction = await client.interactions.create({
-    agent: "deep-research-pro-preview-12-2025",
+    agent: "deep-research-preview-04-2026",
     input: "研究 Google TPU 的歷史。",
     background: true,
 });
@@ -176,6 +182,16 @@ while (true) {
     await new Promise(resolve => setTimeout(resolve, 10000));
 }
 ```
+
+**進階深度研究功能**
+
+深度研究支援基本研究之外的其他功能。請參閱 [深度研究文件](https://ai.google.dev/gemini-api/docs/deep-research) 以取得完整詳細資訊與程式碼範例：
+
+- **協同規劃**：在執行前審查並改進代理的研究計畫（在 `agent_config` 中設定 `collaborative_planning: true`）
+- **原生視覺化**：與研究報告內聯產生圖表與資訊圖（在 `agent_config` 中設定 `visualization: "auto"`）
+- **MCP 整合**：透過遠端 MCP 伺服器連接到私有資料來源與專門工具
+- **檔案搜尋**：在已上傳檔案與連接的檔案儲存中搜尋
+- **多模態輸入**：以 PDF、CSV、圖片、音訊與影片作為研究基礎
 
 ### 串流 (Streaming)
 
@@ -275,7 +291,7 @@ for await (const chunk of stream) {
 - `sendMessage()` → 改用 `interactions.create(previous_interaction_id=...)`
 - `response.text` → 改用 `interaction.outputs[-1].text`
 - 過去沒有背景執行機制 → 改用 `background=True` 於非同步任務
-- 過去沒有代理功能 → 改用 `agent="deep-research-pro-preview-12-2025"`
+- 過去沒有代理功能 → 改用 `agent="deep-research-preview-04-2026"` 或 `agent="deep-research-max-preview-04-2026"`
 
 ---
 

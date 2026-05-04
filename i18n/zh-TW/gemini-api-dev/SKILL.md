@@ -1,6 +1,6 @@
 ---
 name: gemini-api-dev
-description: 在建構 Gemini 模型應用程式、使用 Gemini API、處理多模態內容（文字、圖片、音訊、影片）、實作函式呼叫、使用結構化輸出，或需要最新模型規格時使用此技能。涵蓋 SDK 使用（Python 的 google-genai、JavaScript/TypeScript 的 @google/genai、Java 的 com.google.genai:google-genai、Go 的 google.golang.org/genai）、模型選擇與 API 功能。
+description: 在建構包含 Gemini 及 Gemma 4 的 Gemini API 託管模型應用程式、處理多模態內容（文字、圖片、音訊、影片）、實作函式呼叫、使用結構化輸出，或需要最新模型規格時使用此技能。涵蓋 SDK 使用（Python 的 google-genai、JavaScript/TypeScript 的 @google/genai、Java 的 com.google.genai:google-genai、Go 的 google.golang.org/genai）、模型選擇與 API 功能。
 ---
 
 # Gemini API 開發技能
@@ -31,6 +31,8 @@ Gemini API 提供存取 Google 最先進 AI 模型的能力。主要功能包括
 - `gemini-3.1-flash-image-preview`：65k / 32k token，圖片生成與編輯
 - `gemini-2.5-pro`：100 萬 token，複雜推理、程式設計、研究
 - `gemini-2.5-flash`：100 萬 token，快速、均衡效能、多模態
+- `gemma-4-31b-it`：Gemma 4 密集模型，31B 參數
+- `gemma-4-26b-a4b-it`：Gemma 4 MoE 模型，總計 26B 且活躍參數為 4B
 
 > [!WARNING]
 > `gemini-2.0-*`、`gemini-1.5-*` 等模型為**舊版且已棄用**。請勿使用。
