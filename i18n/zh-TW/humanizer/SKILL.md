@@ -298,10 +298,10 @@ allowed-tools:
 
 ### 18. 彎引號
 
-**問題：** ChatGPT 使用彎引號（\u201c...\u201d）而非直引號（"..."）。
+**問題：** ChatGPT 使用彎引號（“...”）而非直引號（"..."）。
 
 **之前：**
-> He said \u201cthe project is on track\u201d but others disagreed.
+> He said “the project is on track” but others disagreed.
 
 **之後：**
 > He said "the project is on track" but others disagreed.
