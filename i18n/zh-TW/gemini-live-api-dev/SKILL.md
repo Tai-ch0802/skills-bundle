@@ -34,6 +34,25 @@ Live API 支援透過 WebSockets 與 Gemini 進行**低延遲、即時的語音�
 > - `gemini-live-2.5-flash-preview` — 於 2025 年 6 月 17 日發布。關閉時間：2025 年 12 月 9 日。
 > - `gemini-2.0-flash-live-001` — 於 2025 年 4 月 9 日發布。關閉時間：2025 年 12 月 9 日。
 
+## SDKs
+
+- **Python**：`google-genai` — `pip install google-genai`
+- **JavaScript/TypeScript**：`@google/genai` — `npm install @google/genai`
+
+> [!WARNING]
+> 舊版 SDK `google-generativeai` (Python) 與 `@google/generative-ai` (JS) 已棄用。請改用上述新 SDK。
+
+## 合作夥伴整合
+
+為簡化即時音訊／視訊應用程式開發，可使用支援 Gemini Live API 的第三方整合（透過 **WebRTC** 或 **WebSockets**）：
+
+- [LiveKit](https://docs.livekit.io/agents/models/realtime/plugins/gemini/) — 在 LiveKit Agents 中使用 Gemini Live API。
+- [Pipecat by Daily](https://docs.pipecat.ai/guides/features/gemini-live) — 以 Gemini Live 與 Pipecat 打造即時 AI 聊天機器人。
+- [Fishjam by Software Mansion](https://docs.fishjam.io/tutorials/gemini-live-integration) — 以 Fishjam 建立即時影音串流應用。
+- [Vision Agents by Stream](https://visionagents.ai/integrations/gemini) — 以 Vision Agents 建構即時語音與視訊 AI 應用。
+- [Voximplant](https://voximplant.com/products/gemini-client) — 以 Voximplant 把進線／撥出通話接到 Live API。
+- [Firebase AI SDK](https://firebase.google.com/docs/ai-logic/live-api?api=dev) — 透過 Firebase AI Logic 開始使用 Gemini Live API。
+
 ## 音訊格式
 
 - **輸入**：原始 PCM，小端序 (little-endian)，16 位元，單聲道。原生為 16kHz（將重新取樣其他頻率）。MIME 類型：`audio/pcm;rate=16000`
@@ -196,8 +215,23 @@ if (content?.interrupted) { /* 停止播放，清除音訊佇列 */ }
 - **音訊+視訊會話** — 不壓縮情況下可達 2 分鐘
 - **連線壽命** — 約 10 分鐘（請使用會話恢復）
 - **上下文視窗** — 128k 個 token（原生音訊）/ 32k 個 token（標準）
+- **非同步函式呼叫** — 尚未支援；函式呼叫僅為同步。模型會等到你回傳 tool 回應後才開始回覆。
+- **主動式音訊（Proactive audio）** — Gemini 3.1 Flash Live 尚未支援，請移除相關設定。
+- **情感對話（Affective dialogue）** — Gemini 3.1 Flash Live 尚未支援，請移除相關設定。
 - **程式碼執行** — 不支援
 - **URL 上下文** — 不支援
+
+## 從 Gemini 2.5 Flash Live 遷移
+
+從 `gemini-2.5-flash-native-audio-preview-12-2025` 遷移到 `gemini-3.1-flash-live-preview` 時：
+
+1. **模型字串** — 從 `gemini-2.5-flash-native-audio-preview-12-2025` 更新為 `gemini-3.1-flash-live-preview`。
+2. **思考設定** — 改用 `thinkingLevel`（`minimal`、`low`、`medium`、`high`），不再使用 `thinkingBudget`。預設 `minimal` 以取得最低延遲。
+3. **伺服器事件** — 單一事件可同時包含多個 content parts（音訊 + 轉錄）。請處理每個事件中的**所有** parts。
+4. **Client content** — `send_client_content` 僅用於注入初始上下文歷史記錄（需在 `history_config` 中設定 `initial_history_in_client_content`）。對話期間傳送文字請使用 `send_realtime_input`。
+5. **Turn coverage** — 預設由 `TURN_INCLUDES_ONLY_ACTIVITY` 改為 `TURN_INCLUDES_AUDIO_ACTIVITY_AND_ALL_VIDEO`。若會持續送出視訊影格，請考慮只在有音訊活動時送出，以降低成本。
+6. **非同步函式呼叫** — 尚未支援，函式呼叫僅為同步。
+7. **主動式音訊與情感對話** — 尚未支援，請移除相關設定。
 
 ## 最佳實踐
 
@@ -208,10 +242,24 @@ if (content?.interrupted) { /* 停止播放，清除音訊佇列 */ }
 5. **針對所有即時使用者輸入使用 `send_realtime_input`**（音訊、視訊、文字）。僅保留 `send_client_content` 來注入對話歷史記錄
 6. 在麥克風暫停時**傳送 `audioStreamEnd`** 以排空快取的音訊
 7. 在收到中斷訊號時**清除音訊播放佇列**
+8. **處理每個事件中的所有 parts** — 一個事件可同時包含多個 content parts
 
-## 如何使用 Gemini API
+## 文件查詢
 
-如需詳細的 API 文件，請從官方文件索引取得：
+### 已安裝 MCP（建議）
+
+若有 **`search_docs`** 工具（來自 Google MCP 伺服器）可用，請將其作為**唯一**文件來源：
+
+1. 以你的查詢呼叫 `search_docs`
+2. 閱讀回傳的文件
+3. **以 MCP 結果為信任來源**取得 API 細節 —— 它們始終是最新的。
+
+> [!IMPORTANT]
+> 當有 MCP 工具時，**絕不要**手動 fetch URL。MCP 提供最新且已索引的文件，比 URL fetching 更精準也更省 token。
+
+### 未安裝 MCP（僅為備援）
+
+若沒有 MCP 文件工具可用，請從官方文件索引取得：
 
 **llms.txt URL**：`https://ai.google.dev/gemini-api/docs/llms.txt`
 
