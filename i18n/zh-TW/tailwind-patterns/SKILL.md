@@ -188,6 +188,16 @@ allowed-tools: Read, Write, Edit, Glob, Grep
 | Mono | `'JetBrains Mono', 'Fira Code', monospace` |
 | Display | `'Outfit', 'Poppins', sans-serif` |
 
+### 字級系統
+
+| Class | 大小 | 用途 |
+|-------|------|------|
+| `text-xs` | 0.75rem | 標籤、說明文字 |
+| `text-sm` | 0.875rem | 次要文字 |
+| `text-base` | 1rem | 內文 |
+| `text-lg` | 1.125rem | 引言文字 |
+| `text-xl`+ | 1.25rem+ | 標題 |
+
 ---
 
 ## 9. 動畫與過渡
