@@ -1,6 +1,6 @@
 ---
 name: systematic-debugging
-description: 4 階段系統化除錯方法論，具備根本原因分析和基於證據的驗證。用於除錯複雜問題。
+description: "4 階段系統化除錯方法論，具備根本原因分析和基於證據的驗證。用於除錯複雜問題。"
 allowed-tools: Read, Glob, Grep
 ---
 

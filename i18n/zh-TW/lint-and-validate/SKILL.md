@@ -1,6 +1,6 @@
 ---
 name: lint-and-validate
-description: 自動品質控制、Lint 與靜態分析程序。每次程式碼修改後使用，確保語法正確性和專案標準。觸發關鍵字：lint、format、check、validate、types、static analysis。
+description: "自動品質控制、Lint 與靜態分析程序。每次程式碼修改後使用，確保語法正確性和專案標準。觸發關鍵字：lint、format、check、validate、types、static analysis。"
 allowed-tools: Read, Glob, Grep, Bash
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: brainstorming
-description: 蘇格拉底式提問協議 + 使用者溝通。複雜請求、新功能或不明確需求時必須使用。包含進度報告和錯誤處理。
+description: "蘇格拉底式提問協議 + 使用者溝通。複雜請求、新功能或不明確需求時必須使用。包含進度報告和錯誤處理。"
 allowed-tools: Read, Glob, Grep
 ---
 

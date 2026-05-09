@@ -1,6 +1,6 @@
 ---
 name: vertex-ai-api-dev
-description: Google Cloud Vertex AI 上 Gemini API 使用指南 — 涵蓋 Gen AI SDK（Python, JS/TS, Go, Java, C#）、Live API、工具呼叫、多模態生成、快取與批次預測
+description: "Google Cloud Vertex AI 上 Gemini API 使用指南 — 涵蓋 Gen AI SDK（Python, JS/TS, Go, Java, C#）、Live API、工具呼叫、多模態生成、快取與批次預測"
 compatibility: 需要有效的 Google Cloud 憑證並啟用 Vertex AI API。
 ---
 

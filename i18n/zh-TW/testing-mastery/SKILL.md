@@ -1,6 +1,6 @@
 ---
 name: testing-mastery
-description: 統一測試技能 — TDD 工作流程、單元/整合測試模式、E2E/Playwright 策略。取代 tdd-workflow + testing-patterns + webapp-testing。
+description: "統一測試技能 — TDD 工作流程、單元/整合測試模式、E2E/Playwright 策略。取代 tdd-workflow + testing-patterns + webapp-testing。"
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 version: 1.0
 priority: HIGH

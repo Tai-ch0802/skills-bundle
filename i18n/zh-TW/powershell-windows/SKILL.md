@@ -1,6 +1,6 @@
 ---
 name: powershell-windows
-description: PowerShell Windows 模式。關鍵陷阱、運算子語法、錯誤處理。
+description: "PowerShell Windows 模式。關鍵陷阱、運算子語法、錯誤處理。"
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 ---
 

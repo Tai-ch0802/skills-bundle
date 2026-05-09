@@ -1,6 +1,6 @@
 ---
 name: deployment-procedures
-description: 生產環境部署原則與決策。安全部署工作流程、回滾策略與驗證。教你思考而非腳本。
+description: "生產環境部署原則與決策。安全部署工作流程、回滾策略與驗證。教你思考而非腳本。"
 allowed-tools: Read, Glob, Grep, Bash
 ---
 
