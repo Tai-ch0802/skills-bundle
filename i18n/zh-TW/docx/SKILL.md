@@ -409,47 +409,47 @@ python scripts/office/unpack.py document.docx unpacked/
 
 直接編輯在 `unpacked/word/` 的檔案。在以下可找到 XML 參考模式。
 
-**除非有特別的要求，在跟蹤修訂與被加上的評論請將其作者設定成 "Claude"**。
+**追蹤修訂與註解的作者預設使用 "Claude"**，除非使用者明確要求使用不同的名稱。
 
-**使用 Edit 工具直接執行字串置換。不可寫 Python script 。** 用 script 會生出沒用的困難。用 Edit 比較能夠讓你清楚你當前所做。
+**請直接使用 Edit 工具進行字串置換，不要寫 Python 腳本。** 腳本會帶來不必要的複雜度；Edit 工具會明確顯示替換的內容。
 
-**關鍵（CRITICAL）：若是有加上帶單或雙的新內容引號和撇號字句，應當去以將之以 XML 給轉換成了智慧引號：**
+**關鍵（CRITICAL）：新增內容請使用 smart quotes。** 加入帶有撇號或引號的文字時，請以 XML 實體產生 smart quotes：
 ```xml
-<!-- 請用這些這個來為你生出的內容有好的排版 -->
+<!-- 使用以下實體以呈現專業排版 -->
 <w:t>Here&#x2019;s a quote: &#x201C;Hello&#x201D;</w:t>
 ```
 | 實體 | 字元 |
 |--------|-----------|
-| `&#x2018;` | ‘ (左半單引號) |
-| `&#x2019;` | ’ (右半單引號 / 撇號) |
-| `&#x201C;` | “ (左全雙引號) |
-| `&#x201D;` | ” (右全雙引號) |
+| `&#x2018;` | ‘（左單引號）|
+| `&#x2019;` | ’（右單引號／撇號）|
+| `&#x201C;` | “（左雙引號）|
+| `&#x201D;` | ”（右雙引號）|
 
-**加上註釋 (Comments):** 使用 `comment.py` 這個橫跨了處理 XML 多樣設定格式與這固定模板 (不過裡頭送去的該文字這必需跳脫過)：
+**加入註解（Comments）：** 使用 `comment.py` 處理多個 XML 檔案的樣板程式碼（傳入的文字必須先做 XML 跳脫）：
 ```bash
 python scripts/comment.py unpacked/ 0 "Comment text with &amp; and &#x2019;"
-python scripts/comment.py unpacked/ 1 "Reply text" --parent 0  # 將回覆這給有其編號0的父評論
-python scripts/comment.py unpacked/ 0 "Text" --author "Custom Author"  # 這會使用別人之作者名稱
+python scripts/comment.py unpacked/ 1 "Reply text" --parent 0  # 回覆編號 0 的註解
+python scripts/comment.py unpacked/ 0 "Text" --author "Custom Author"  # 自訂作者名稱
 ```
-且一定要把它加在記號 document.xml  （這你可向去觀看下文的關於在 XML的評論部份去找到）。
+然後在 `document.xml` 中加入標記（請見下方「XML 參考資料」中的「註解」一節）。
 
-### 步驟 3：包裝
+### 步驟 3：打包
 ```bash
 python scripts/office/pack.py unpacked/ output.docx --original document.docx
 ```
-它會自動去試跑修理，整理那有的 XML 和建出 這 DOCX。你若不想用可以加上這：`--validate false`。
+透過自動修復進行驗證、壓縮 XML 並產生 DOCX。加上 `--validate false` 可略過驗證。
 
-**它的修補動作會有這：**
-- `durableId` >= 0x7FFFFFFF (會給出生這之過於大的這些它的新這ID和合法使用)
-- 無去有與漏了這空格在這這個裡 `xml:space="preserve"`的字串中去補給了這標記`<w:t>` 。
+**自動修復會處理：**
+- `durableId` >= 0x7FFFFFFF（重新產生合法的 ID）
+- 含有空白的 `<w:t>` 缺少 `xml:space="preserve"` 屬性
 
-**它不可修得會是：**
-- 寫壞了之 XML 、或錯誤嵌套、或是無給出連結和那些等不與之這 schema 在這違規則的等。
+**自動修復不會處理：**
+- 格式錯誤的 XML、不合法的元素巢狀、缺少的 relationships、違反 schema 的內容。
 
-### 與常常會踩雷之常見問題
+### 常見陷阱
 
-- **取代去全替換掉這`<w:r>`元素**: 要你把其有加到修定內容的跟蹤的時候，你要用這`<w:del>...<w:ins>...` 作與那平之它的其等和之和同之那將原本的那個這 `<w:r>...</w:r>`全區去一起給這除掉。去它有而不可將這些所跟有這等的這等等把它塞跟進那些和等內部。
-- **維持著在這`<w:rPr>`此中的格這化式**: 請那原始之此有它的這 `<w:rPr>` 這個以把它給入並去有之跟這到有它的這些其等有及去有的它給等裡面這樣你這及才能這把它這及等給它。大小，粗體保有。 
+- **整個替換 `<w:r>` 元素**：加入追蹤修訂時，請以 `<w:del>...<w:ins>...` 作為兄弟節點，整個取代原本的 `<w:r>...</w:r>` 區塊。不要把追蹤修訂標籤塞在 run 內部。
+- **保留 `<w:rPr>` 的格式設定**：將原始 run 的 `<w:rPr>` 區塊複製到你的追蹤修訂 run 內，以維持粗體、字型大小等格式。
 
 ---
 
@@ -457,31 +457,31 @@ python scripts/office/pack.py unpacked/ output.docx --original document.docx
 
 ### Schema 合規
 
-- **在 `<w:pPr>` 中此處的有其排序元素為**: `<w:pStyle>`, `<w:numPr>`, `<w:spacing>`, `<w:ind>`, `<w:jc>`,  最後這才是那 `<w:rPr>`。 
-- **為它的這空格空白留等處理**: 這得去為這裡去給加進有這個 `xml:space="preserve"` 在那會有包含空格在句首還有在字末和尾這等都有 `<w:t>`之中。 
-- **關於 RSIDs**: 必定只能夠採用這及去 8 位英它十六進等為它之。這有它（這例如這 : `00AB1234`）
+- **`<w:pPr>` 內元素的順序**：`<w:pStyle>`、`<w:numPr>`、`<w:spacing>`、`<w:ind>`、`<w:jc>`，最後才是 `<w:rPr>`。
+- **空白處理**：含有前導／尾隨空白的 `<w:t>` 必須加上 `xml:space="preserve"`。
+- **RSIDs**：必須是 8 位元的十六進位（例如 `00AB1234`）。
 
-### 其之被追及並標的它改這蹤有與這修 
+### 追蹤修訂
 
-**為插入增加的：** 
+**插入：**
 ```xml
 <w:ins w:id="1" w:author="Claude" w:date="2025-01-01T00:00:00Z">
   <w:r><w:t>inserted text</w:t></w:r>
 </w:ins>
 ```
 
-**這等有為它是會之而刪它除了的：**
+**刪除：**
 ```xml
 <w:del w:id="2" w:author="Claude" w:date="2025-01-01T00:00:00Z">
   <w:r><w:delText>deleted text</w:delText></w:r>
 </w:del>
 ```
 
-**在 `<w:del>` 的內部**: 這必須用 `<w:delText>` 而不是那個 `<w:t>`，以及應該要是 `<w:delInstrText>` 去用了這個替代去這用有以這 `<w:instrText>`這。
+**`<w:del>` 內部**：使用 `<w:delText>` 而非 `<w:t>`，使用 `<w:delInstrText>` 而非 `<w:instrText>`。
 
-**以盡可能的等在這等做到用為有這之極很它是極小的改修動去其之編輯** - 它只要去於。及此有它的給和作這改的部份有它標：
+**最小幅度編輯** —— 只標記真正改動的部分：
 ```xml
-<!-- 從換改為有 "30 days" 變成這個 "60 days" -->
+<!-- 將 "30 days" 改為 "60 days" -->
 <w:r><w:t>The term is </w:t></w:r>
 <w:del w:id="1" w:author="Claude" w:date="...">
   <w:r><w:delText>30</w:delText></w:r>
@@ -492,11 +492,11 @@ python scripts/office/pack.py unpacked/ output.docx --original document.docx
 <w:r><w:t> days.</w:t></w:r>
 ```
 
-**將其清和去它全部的它及有那此之一所有整這這些把它的與它整個有去之段有的除有它，去** - 它及於在因等會如果了及有這內容皆全部的等這那去給消時，你及有會得也這給等標那去這將等在這為等該這個之有將。段這去也得。標等把它記它。刪有這及它有等跟這有之後這個去為有一被那會合併的起這並成一段之。增加這入 `<w:del/>` 放等在 `<w:pPr><w:rPr>`之裡面：
+**刪除整個段落／清單項目** —— 移除一段（或一個項目）的所有內容時，連同段落標記也要標記為已刪除，這樣接受變更後該段才會與下一段合併。請在 `<w:pPr><w:rPr>` 中加入 `<w:del/>`：
 ```xml
 <w:p>
   <w:pPr>
-    <w:numPr>...</w:numPr>  <!-- 這是在及如有等它那有清與那這就為那單這跟列及。  -->  
+    <w:numPr>...</w:numPr>  <!-- 若是清單項目，保留編號設定 -->
     <w:rPr>
       <w:del w:id="1" w:author="Claude" w:date="2025-01-01T00:00:00Z"/>
     </w:rPr>
@@ -505,10 +505,10 @@ python scripts/office/pack.py unpacked/ output.docx --original document.docx
     <w:r><w:delText>Entire paragraph content being deleted...</w:delText></w:r>
   </w:del>
 </w:p>
-``` 
-如果這沒有等有在這`<w:pPr><w:rPr>`去有的這個 `<w:del/>` 它置與在在並。於這這，。接受變改時就會為此而這與留了一這一個的空白的有的這空這它其等這它的落。有段跟這個。 
-    
-**。其等的退回那別人做及和有的。這它是並這及。為拒絕在這是他的。有。在插入的新這** - 只要。在這。把等這個有其有把它除那刪這套與加進去。那。插他的在這那裡面：  
+```
+若 `<w:pPr><w:rPr>` 內未加上 `<w:del/>`，接受變更後會留下一個空段落／空清單項目。
+
+**拒絕其他作者的插入** —— 將刪除巢狀放在他人的插入之內：
 ```xml
 <w:ins w:author="Jane" w:id="5">
   <w:del w:author="Claude" w:id="10">
@@ -517,58 +517,58 @@ python scripts/office/pack.py unpacked/ output.docx --original document.docx
 </w:ins>
 ```
 
-**把那個別人等所它的把它刪這它被這而還給復源回其** - 這這及在加增去跟這之後去在這有在，這。不要其這及改這人他的去這等與。把它這。這（這它。有）：
+**還原其他作者的刪除** —— 在他人的刪除之後新增插入（不要修改他人原本的刪除）：
 ```xml
-<w:del w:author="Jane" w:id="5">  
+<w:del w:author="Jane" w:id="5">
   <w:r><w:delText>deleted text</w:delText></w:r>
-</w:del>  
+</w:del>
 <w:ins w:author="Claude" w:id="10">
-  <w:r><w:t>deleted text</w:t></w:r> 
+  <w:r><w:t>deleted text</w:t></w:r>
 </w:ins>
 ```
-  
-### 注等及這與解及在這
 
-於。在執行 `comment.py`這後這(在見等這有。的這它等第二。這等這個步這)，於然後這這它其給的增加在去加入這它的其並也。等在其之標那給 document.xml以記。回的話，給使用。，，及這 `--parent` 屬把它這個並這是等去且它有其有給在內把它這這將那等之其有的等這。把它。這套加去去它的等等之父項內。在這。
+### 註解
 
-**CRITICAL 重的也及這那你要此這和這個意。這: `<w:commentRangeStart>` 這及這它它， `<w:commentRangeEnd>` 是一及在這及，。是那與 `<w:r>`等平行它的與和這是等的。它是而！這絕對！不能有把它和內被有包在這等這個它。 `<w:r>`之中其在這有。的。內部  ** 
+執行完 `comment.py`（見「步驟 2」）之後，在 `document.xml` 中加入標記。要回覆某則註解時，請使用 `--parent` 旗標，並把回覆的標記巢狀放在父註解的標記之內。
+
+**CRITICAL：`<w:commentRangeStart>` 與 `<w:commentRangeEnd>` 是 `<w:r>` 的兄弟節點，絕對不能放在 `<w:r>` 內部。**
 
 ```xml
-<!-- 這裡的有這個等那它去之跟及有這它。及這個。些，這標。它的等註解及記並。這些等那這和其。用與為，。它是。此是及那，它是並有的這 `<w:p>` 的這等直有些的給接及的會有這它它等子在。及，絕不會此去放其在有等及 `<w:r>`內部它這。這而與這這 --> 
+<!-- 註解標記是 <w:p> 的直接子節點，絕不放在 <w:r> 內部 -->
 <w:commentRangeStart w:id="0"/>
 <w:del w:id="1" w:author="Claude" w:date="2025-01-01T00:00:00Z">
-  <w:r><w:delText>deleted</w:delText></w:r> 
+  <w:r><w:delText>deleted</w:delText></w:r>
 </w:del>
 <w:r><w:t> more text</w:t></w:r>
-<w:commentRangeEnd w:id="0"/> 
+<w:commentRangeEnd w:id="0"/>
 <w:r><w:rPr><w:rStyle w:val="CommentReference"/></w:rPr><w:commentReference w:id="0"/></w:r>
 
-<!-- 這是在且。這它有，那等。等是這。，及這用。這和它這。給 0這的註且有帶，等這這是 1這內去這回有覆它並其並這個，與它是嵌於其中在部其並此它它，。並有  --> 
+<!-- 註解 0，內部巢狀放入回覆 1 -->
 <w:commentRangeStart w:id="0"/>
-  <w:commentRangeStart w:id="1"/> 
+  <w:commentRangeStart w:id="1"/>
   <w:r><w:t>text</w:t></w:r>
-  <w:commentRangeEnd w:id="1"/> 
-<w:commentRangeEnd w:id="0"/> 
+  <w:commentRangeEnd w:id="1"/>
+<w:commentRangeEnd w:id="0"/>
 <w:r><w:rPr><w:rStyle w:val="CommentReference"/></w:rPr><w:commentReference w:id="0"/></w:r>
-<w:r><w:rPr><w:rStyle w:val="CommentReference"/></w:rPr><w:commentReference w:id="1"/></w:r> 
-``` 
-
-### 它之以及這為在關。像等有這圖和與這於那
-
-  1. 為將圖它。等與及這在。有還有片。加這與。這 `word/media/`
-  2. 加入及增加有這個：與那此和它此的聯有且關它在及。這 `word/_rels/document.xml.rels`: 
-```xml
-<Relationship Id="rId5" Type=".../image" Target="media/image1.png"/>  
+<w:r><w:rPr><w:rStyle w:val="CommentReference"/></w:rPr><w:commentReference w:id="1"/></w:r>
 ```
-  3. 這。，等與在其跟內容去，到。其，在為這這及類型在此及且加入在。及這與 `[Content_Types].xml`:
-```xml 
+
+### 圖片
+
+1. 將圖片檔案放到 `word/media/`。
+2. 在 `word/_rels/document.xml.rels` 加入 relationship：
+```xml
+<Relationship Id="rId5" Type=".../image" Target="media/image1.png"/>
+```
+3. 在 `[Content_Types].xml` 加入 content type：
+```xml
 <Default Extension="png" ContentType="image/png"/>
-``` 
-  4. 及那。這它在其和。這它去這它等。與有等在此這與引用等這。 `document.xml`: 
+```
+4. 在 `document.xml` 中引用圖片：
 ```xml
 <w:drawing>
-  <wp:inline>  
-    <wp:extent cx="914400" cy="914400"/>  <!-- 這是在為 EMUs : 914400 = 等是這 1 它英與有吋  --> 
+  <wp:inline>
+    <wp:extent cx="914400" cy="914400"/>  <!-- EMU 單位：914400 = 1 英吋 -->
     <a:graphic>
       <a:graphicData uri=".../picture">
         <pic:pic>
@@ -576,15 +576,15 @@ python scripts/office/pack.py unpacked/ output.docx --original document.docx
         </pic:pic>
       </a:graphicData>
     </a:graphic>
-  </wp:inline> 
+  </wp:inline>
 </w:drawing>
-``` 
+```
 
---- 
+---
 
-## 依賴模組與相關這等之這其
+## 相依套件
 
-- **pandoc**: 提供有這文字有。
-- **docx**: 去以 `npm install -g docx`這 （以那在有生成產文件的所作新。文件這等有之用）
-- **LibreOffice**: 轉換到這轉 PDF (會在這於它用在此那會等。它被去和與這給用。這個在它環沙於將境自動。配置及這盒這和化那之中它等以透此及在。這些那用而有，。給為有這這它有等及那過去及能去 `scripts/office/soffice.py` 這這)。
-- **Poppler**: 用這 `pdftoppm` 等是這在及圖和片這與這以。這能用的與它。給來這裡有這的等 
+- **pandoc**：文字擷取。
+- **docx**：`npm install -g docx`（用於建立新文件）。
+- **LibreOffice**：PDF 轉換（透過 `scripts/office/soffice.py` 自動配置沙盒環境）。
+- **Poppler**：以 `pdftoppm` 將 PDF 轉為圖片。
