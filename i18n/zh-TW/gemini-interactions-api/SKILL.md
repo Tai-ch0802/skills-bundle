@@ -1,6 +1,6 @@
 ---
 name: gemini-interactions-api
-description: 當編寫呼叫 Gemini API 的程式碼時請使用此技能 用於文字生成、多輪對話、多模態理解、影像生成、串流回應、背景研究任務、函式呼叫、結構化輸出, 或從舊的 generateContent API 遷移。 此技能涵蓋 Interactions API，這是在 Python 和 TypeScript 中使用 Gemini 模型和代理的建議方式。
+description: "當編寫呼叫 Gemini API 的程式碼時請使用此技能，用於文字生成、多輪對話、多模態理解、影像生成、串流回應、背景研究任務、函式呼叫、結構化輸出，或從舊的 generateContent API 遷移。此技能涵蓋 Interactions API，這是在 Python 與 TypeScript 中使用 Gemini 模型與代理的建議方式。"
 ---
 
 # Gemini Interactions API 技能
