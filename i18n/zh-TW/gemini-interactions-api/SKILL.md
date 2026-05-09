@@ -211,6 +211,9 @@ for chunk in stream:
     if chunk.event_type == "content.delta":
         if chunk.delta.type == "text":
             print(chunk.delta.text, end="", flush=True)
+        elif chunk.delta.type == "thought_summary":
+            summary_text = chunk.delta.content.get('text', '') if hasattr(chunk.delta, 'content') else getattr(chunk.delta, 'text', '')
+            print(summary_text, end="", flush=True)
     elif chunk.event_type == "interaction.complete":
         print(f"\n\nTotal Tokens: {chunk.interaction.usage.total_tokens}")
 ```
@@ -231,6 +234,9 @@ for await (const chunk of stream) {
     if (chunk.event_type === "content.delta") {
         if (chunk.delta.type === "text" && "text" in chunk.delta) {
             process.stdout.write(chunk.delta.text);
+        } else if (chunk.delta.type === "thought_summary") {
+            const text = chunk.delta.content?.text || "";
+            process.stdout.write(text);
         }
     } else if (chunk.event_type === "interaction.complete") {
         console.log(`\n\nTotal Tokens: ${chunk.interaction.usage.total_tokens}`);
@@ -245,7 +251,8 @@ for await (const chunk of stream) {
 一次 `Interaction` 回應包含了 `outputs` — 這是一個包含所有內容區塊的陣列。每個區塊都有獨立的 `type` 欄位：
 
 - `text` — 產生的文字內容 (包含 `text` 欄位)
-- `thought` — 模型的思考過程 (必須要有 `signature`，也可選填 `summary`)
+- `thought_summary` — 模型的思考過程摘要 (包含 `text` 欄位)
+- `thought_signature` — 用於思考驗證的不透明簽章
 - `function_call` — 工具呼叫請求 (包含 `id`, `name`, `arguments`)
 - `function_result` — 回傳給模型的工具執行結果 (包含 `call_id`, `name`, `result`)
 - `google_search_call` / `google_search_result` — Google 搜尋工具
@@ -297,6 +304,7 @@ for await (const chunk of stream) {
 
 ## 注意事項
 
+- **在編寫任何程式碼之前**，您必須取得下面符合使用者任務的相關文件頁面。 此技能中的範例為最基本內容，託管的文件包含完整的 API 介面、參數和邊界情況。
 - Interactions **預設會被儲存** (`store=true`)。付費層保留 55 天，免費層保留 1 天。
 - 您可設定 `store=false` 來取消儲存，但這將會停用 `previous_interaction_id` 和 `background=true` 的功能。
 - `tools`、`system_instruction` 與 `generation_config` 的設定是 **針對每次 interaction 獨立生效的** — 必須在每一輪對話中重新指定。
