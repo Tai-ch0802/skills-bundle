@@ -1,6 +1,6 @@
 ---
 name: bash-linux
-description: Bash/Linux 終端模式。關鍵指令、管道、錯誤處理、腳本撰寫。用於 macOS 或 Linux 系統。
+description: "Bash/Linux 終端模式。關鍵指令、管道、錯誤處理、腳本撰寫。用於 macOS 或 Linux 系統。"
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 ---
 

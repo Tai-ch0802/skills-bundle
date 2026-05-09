@@ -1,6 +1,6 @@
 ---
 name: architecture
-description: 架構決策框架。需求分析、權衡評估、ADR 文件。用於做架構決策或分析系統設計。
+description: "架構決策框架。需求分析、權衡評估、ADR 文件。用於做架構決策或分析系統設計。"
 allowed-tools: Read, Glob, Grep
 ---
 

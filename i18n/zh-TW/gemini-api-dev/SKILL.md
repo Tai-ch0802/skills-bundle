@@ -1,6 +1,6 @@
 ---
 name: gemini-api-dev
-description: 在建構包含 Gemini 及 Gemma 4 的 Gemini API 託管模型應用程式、處理多模態內容（文字、圖片、音訊、影片）、實作函式呼叫、使用結構化輸出，或需要最新模型規格時使用此技能。涵蓋 SDK 使用（Python 的 google-genai、JavaScript/TypeScript 的 @google/genai、Java 的 com.google.genai:google-genai、Go 的 google.golang.org/genai）、模型選擇與 API 功能。
+description: "在建構包含 Gemini 及 Gemma 4 的 Gemini API 託管模型應用程式、處理多模態內容（文字、圖片、音訊、影片）、實作函式呼叫、使用結構化輸出，或需要最新模型規格時使用此技能。涵蓋 SDK 使用（Python 的 google-genai、JavaScript/TypeScript 的 @google/genai、Java 的 com.google.genai:google-genai、Go 的 google.golang.org/genai）、模型選擇與 API 功能。"
 ---
 
 # Gemini API 開發技能

@@ -1,6 +1,6 @@
 ---
 name: seo-fundamentals
-description: SEO 基礎、E-E-A-T、Core Web Vitals 和 Google 演算法原則。
+description: "SEO 基礎、E-E-A-T、Core Web Vitals 和 Google 演算法原則。"
 allowed-tools: Read, Glob, Grep
 ---
 

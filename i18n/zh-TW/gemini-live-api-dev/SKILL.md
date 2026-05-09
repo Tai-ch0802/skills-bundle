@@ -1,6 +1,6 @@
 ---
 name: gemini-live-api-dev
-description: 處理使用 Gemini Live API 的即時、雙向串流應用程式時使用此技能。涵蓋基於 WebSocket 的音訊/視訊/文字串流、語音活動偵測 (VAD)、原生音訊功能、函式呼叫、會話管理、用戶端身分驗證的臨時權杖，以及所有 Live API 設定選項。涵蓋的 SDK - google-genai (Python)、@google/genai (JavaScript/TypeScript)。
+description: "處理使用 Gemini Live API 的即時、雙向串流應用程式時使用此技能。涵蓋基於 WebSocket 的音訊/視訊/文字串流、語音活動偵測 (VAD)、原生音訊功能、函式呼叫、會話管理、用戶端身分驗證的臨時權杖，以及所有 Live API 設定選項。涵蓋的 SDK - google-genai (Python)、@google/genai (JavaScript/TypeScript)。"
 ---
 
 # Gemini Live API 開發技能

@@ -1,6 +1,6 @@
 ---
 name: server-management
-description: 伺服器管理原則與決策。程序管理、監控策略和擴展決策。教你思考而非指令。
+description: "伺服器管理原則與決策。程序管理、監控策略和擴展決策。教你思考而非指令。"
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: code-quality
-description: 務實的編碼標準與程式碼審查指南。涵蓋命名、函式、反模式、審查清單及 AI 特定的審查模式。取代 clean-code + code-review-checklist。
+description: "務實的編碼標準與程式碼審查指南。涵蓋命名、函式、反模式、審查清單及 AI 特定的審查模式。取代 clean-code + code-review-checklist。"
 allowed-tools: Read, Write, Edit, Glob, Grep
 version: 1.0
 priority: CRITICAL

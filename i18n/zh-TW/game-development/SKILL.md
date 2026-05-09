@@ -1,6 +1,6 @@
 ---
 name: game-development
-description: 遊戲開發協調器。根據專案需求路由到平台特定技能。
+description: "遊戲開發協調器。根據專案需求路由到平台特定技能。"
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 ---
 
