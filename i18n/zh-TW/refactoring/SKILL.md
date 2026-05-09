@@ -1,6 +1,6 @@
 ---
 name: refactoring
-description: "Guidelines and techniques for identifying code smells and refactoring code, based on Refactoring.guru principles and adapted for Vanilla JS Chrome Extensions."
+description: "識別程式碼異味與重構程式碼的指引與技巧，基於 Refactoring.guru 原則，並針對 Vanilla JS Chrome 擴充功能調整。"
 ---
 
 # Refactoring Skill
@@ -51,7 +51,7 @@ description: "Guidelines and techniques for identifying code smells and refactor
 修改一處需要同時修改多處。
 
 *   **Shotgun Surgery (霰彈式修改)**
-    *   *徵兆*: 每除要加一個小功能，就要改動 5-6 個檔案。
+    *   *徵兆*: 每要新增一個小功能，就要改動 5-6 個檔案。
     *   *對策*: **Move Method/Field (搬移函式/欄位)**。將相關邏輯集中到單一模組。
 
 ### 4. Dispensables (可有可無者)
@@ -70,11 +70,11 @@ description: "Guidelines and techniques for identifying code smells and refactor
 ## 常用重構技術 (Techniques)
 
 ### Composing Methods (組裝函式)
-*   **Extract Method**: 選中一段代碼 -> 獨立為新函式 -> 命名 ->替換原處調用。
-*   **Inline Method**: 當函式本體比名稱更清楚時，將其塞回調用處。
-*   **Replace Temp with Query**: 將臨時變數替換為函式調用，減少局部變數干擾。
+*   **Extract Method**: 選中一段程式碼 -> 獨立為新函式 -> 命名 -> 替換原處呼叫。
+*   **Inline Method**: 當函式本體比名稱更清楚時，將其塞回呼叫處。
+*   **Replace Temp with Query**: 將暫時變數替換為函式呼叫，減少區域變數干擾。
 
-### Organizing Data (組織數據)
+### Organizing Data (組織資料)
 *   **Encapsulate Field**: (在 JS 中較少強制) 使用 getter/setter 封裝變數存取。
 *   **Replace Magic Number with Symbolic Constant**: 將 `86400` 替換為 `SECONDS_IN_DAY`。
 
@@ -101,9 +101,11 @@ description: "Guidelines and techniques for identifying code smells and refactor
 4.  **樣式一致性**:
     *   避免使用 `element.style.color = 'red'`。應使用 CSS class (`element.classList.add('error')`) 搭配 `index.css`。
 
-## 如何使用此 Skill
-當 User 要求 "Refactor this file" 或 "Clean up this code" 時：
-1.  **Check**: 閱讀檔案，對照上述 Code Smells 清單。
-2.  **Plan**: 提出重構計畫 (例如: "我將把這個 100 行的 render 函式拆解為 3 個子函式")。
-3.  **Execute**: 執行修改。
-4.  **Verify**: 確保功能一致。
+## 如何使用此技能
+
+當使用者要求「Refactor this file」或「Clean up this code」時：
+
+1.  **Check（檢查）**: 閱讀檔案，對照上述 Code Smells 清單。
+2.  **Plan（規劃）**: 提出重構計畫（例如：「我將把這個 100 行的 render 函式拆解為 3 個子函式」）。
+3.  **Execute（執行）**: 執行修改。
+4.  **Verify（驗證）**: 確保功能一致。
