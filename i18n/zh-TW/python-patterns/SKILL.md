@@ -195,6 +195,27 @@ def apply(fn: Callable[[int], str]) -> str: ...
 └── pyproject.toml
 ```
 
+### FastAPI 結構原則
+
+```
+依功能或依層次組織：
+
+依層次：
+├── routes/（API 端點）
+├── services/（業務邏輯）
+├── models/（資料庫模型）
+├── schemas/（Pydantic 模型）
+└── dependencies/（共用相依）
+
+依功能：
+├── users/
+│   ├── routes.py
+│   ├── service.py
+│   └── schemas.py
+└── products/
+    └── ...
+```
+
 ---
 
 ## 5. Django 原則（2025）
@@ -207,6 +228,12 @@ Django 支援 async：
 ├── Async middleware
 ├── Async ORM（有限）
 └── ASGI 部署
+
+Django 中何時使用 async：
+├── 外部 API 呼叫
+├── WebSocket（Channels）
+├── 高併發 view
+└── 觸發背景任務
 ```
 
 ### Django 最佳實踐
@@ -216,6 +243,11 @@ Django 支援 async：
 ├── 胖模型、瘦視圖
 ├── 使用 managers 處理常用查詢
 ├── 用抽象基礎類別共享欄位
+
+Views：
+├── 複雜 CRUD 用 Class-based view
+├── 簡單端點用 Function-based view
+├── 配合 DRF 使用 viewsets
 
 查詢：
 ├── select_related() 用於 FK
@@ -259,6 +291,21 @@ Django 支援 async：
 ├── 自動清理（yield）
 ```
 
+### Pydantic v2 整合
+
+```python
+# FastAPI 與 Pydantic 緊密整合：
+
+# 請求驗證
+@app.post("/users")
+async def create(user: UserCreate) -> UserResponse:
+    # user 已經完成驗證
+    ...
+
+# 回應序列化
+# 回傳型別即為回應 schema
+```
+
 ---
 
 ## 7. 背景任務
@@ -273,9 +320,55 @@ Django 支援 async：
 | **RQ** | 簡單 Redis 佇列 |
 | **Dramatiq** | Actor 基礎、比 Celery 簡單 |
 
+### 何時使用各項方案
+
+```
+FastAPI BackgroundTasks：
+├── 快速操作
+├── 不需要持久化
+├── Fire-and-forget
+└── 同一個 process
+
+Celery／ARQ：
+├── 長時間運作的任務
+├── 需要重試邏輯
+├── 分散式 worker
+├── 持久化佇列
+└── 複雜工作流
+```
+
 ---
 
-## 8. 測試原則
+## 8. 錯誤處理原則
+
+### 例外策略
+
+```
+在 FastAPI：
+├── 建立自訂例外類別
+├── 註冊例外處理器
+├── 回傳一致的錯誤格式
+└── 記錄日誌但不洩漏內部細節
+
+模式：
+├── 在 service 層丟出 domain 例外
+├── 在 handler 層攔截並轉換
+└── 客戶端拿到乾淨的錯誤回應
+```
+
+### 錯誤回應理念
+
+```
+應包含：
+├── 錯誤代碼（程式可解析）
+├── 訊息（人類可讀）
+├── 細節（適用時逐欄位）
+└── 不要 stack traces（資安考量）
+```
+
+---
+
+## 9. 測試原則
 
 ### 測試策略
 
@@ -285,9 +378,34 @@ Django 支援 async：
 | **整合** | API 端點 | pytest + httpx/TestClient |
 | **E2E** | 完整工作流 | pytest + DB |
 
+### Async 測試
+
+```python
+# 使用 pytest-asyncio 撰寫 async 測試
+
+import pytest
+from httpx import AsyncClient
+
+@pytest.mark.asyncio
+async def test_endpoint():
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        response = await client.get("/users")
+        assert response.status_code == 200
+```
+
+### Fixtures 策略
+
+```
+常見 fixtures：
+├── db_session → 資料庫連線
+├── client → 測試 client
+├── authenticated_user → 帶 token 的使用者
+└── sample_data → 測試資料準備
+```
+
 ---
 
-## 9. 決策檢查清單
+## 10. 決策檢查清單
 
 實作前：
 
@@ -297,6 +415,26 @@ Django 支援 async：
 - [ ] **規劃了型別提示策略？**
 - [ ] **定義了專案結構？**
 - [ ] **規劃了錯誤處理？**
+- [ ] **考慮了背景任務？**
+
+---
+
+## 11. 應避免的反模式
+
+### ❌ 不要：
+- 簡單 API 預設用 Django（FastAPI 可能更適合）
+- 在 async 程式碼中使用 sync 函式庫
+- 公開 API 略過型別提示
+- 把業務邏輯放在 routes/views
+- 忽略 N+1 查詢
+- 粗心混合 async 與 sync
+
+### ✅ 要：
+- 依情境選擇框架
+- 詢問 async 需求
+- 使用 Pydantic 做驗證
+- 分離關注點（routes → services → repos）
+- 測試關鍵路徑
 
 ---
 
