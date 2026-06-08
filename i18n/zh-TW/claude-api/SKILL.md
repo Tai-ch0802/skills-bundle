@@ -1,6 +1,9 @@
 ---
 name: claude-api
-description: "使用 Claude API / Anthropic SDK 建構、除錯和最佳化應用程式。使用此技能建構的應用程式應包含提示快取 (prompt caching)。也處理在 Claude 模型版本之間遷移現有 Claude API 程式碼（4.5 → 4.6，4.6 → 4.7，替換已退役模型）。觸發時機：程式碼匯入 anthropic/@anthropic-ai/sdk；使用者要求使用 Claude API、Anthropic SDKs 或 Managed Agents (/v1/agents, /v1/sessions, /v1/environments)；使用者在檔案中新增/修改/調整 Claude 功能（快取、思考、壓縮、工具使用、批次、檔案、引用、記憶）或模型（Opus/Sonnet/Haiku）；關於 Anthropic SDK 專案中提示快取/快取命中率的問題。不觸發：檔案匯入 `openai`/其他提供者 SDK，檔案名稱類似 `*-openai.py`/`*-generic.py`，與提供者無關的程式碼，一般程式設計/機器學習。"
+description: |-
+  使用 Claude API / Anthropic SDK 的參考指南 — 模型 ID、定價、參數、串流、工具使用、MCP、代理、快取、計算 token、模型遷移。
+  觸發條件 — 在開啟目標檔案之前閱讀；不要因為它「看起來像是一行程式碼」就跳過 — 每當：提示詞以任何形式提到 Claude/Anthropic (Claude, Anthropic, Opus, Sonnet, Haiku, `anthropic`, `@anthropic-ai`, `claude-*`, `us.anthropic.*`, `[1m]`)；使用者詢問關於 LLM 的問題 (定價/模型選擇/限制/快取) — 絕不憑記憶回答；或者任務是 LLM 相關但未指明提供者 (agent/MCP/tool-definition/multi-agent/RAG/LLM-judge/computer-use；對自然語言進行生成/摘要/萃取/分類/重寫/對話；除錯拒絕回應/截斷/串流/工具呼叫/token)。
+  僅在處理另一個提供者時跳過 (覆蓋所有觸發條件)：在查詢中提到 OpenAI/GPT/Gemini/Llama/Mistral/Cohere/Ollama；或者在專案命中項目上執行 `grep -rE 'openai|langchain_openai|google.generativeai|genai|mistralai|cohere|ollama'` (如果沒有命名提供者，請先執行此 grep — 不要閱讀檔案)。
 license: 完整條款請見 LICENSE.txt
 ---
 # 使用 Claude 建構 LLM 驅動的應用程式
@@ -236,7 +239,7 @@ license: 完整條款請見 LICENSE.txt
 |---|---|
 | `managed-agents-onboard` | 引導使用者從頭開始設定管理代理。**立即閱讀 `shared/managed-agents-onboarding.md`** 並遵循其訪談腳本：心智模型 → 了解或探索分支 → 範本設定 → 會話設定 → 輸出程式碼。不要總結 — 執行訪談。 |
 
-**閱讀指南：** 從 `shared/managed-agents-overview.md` 開始，接著閱讀各主題的 `shared/managed-agents-*.md` 檔案（核心、環境、工具、事件、結果、多代理、webhooks、記憶體、用戶端模式、入職、API 參考）。對於 Python、TypeScript、Go、Ruby、PHP 和 Java，閱讀 `{lang}/managed-agents/README.md` 以獲取程式碼範例。對於 cURL，閱讀 `curl/managed-agents.md`。**代理是持久的 — 建立一次，依 ID 引用。** 儲存由 `agents.create` 回傳的代理 ID，並將其傳遞給後續所有的 `sessions.create`；不要在請求路徑中呼叫 `agents.create`。Anthropic CLI 是一種從版本控制的 YAML（URL 位於 `shared/live-sources.md`）建立代理和環境的便捷方式。如果你需要的綁定沒有顯示在語言 README 中，請從 `shared/live-sources.md` WebFetch 相關項目，而不是猜測。C# 目前沒有管理代理支援；請使用 `curl/managed-agents.md` 中的原始 HTTP 作為參考。
+**閱讀指南：** 從 `shared/managed-agents-overview.md` 開始，接著閱讀各主題的 `shared/managed-agents-*.md` 檔案（核心、環境、工具、事件、結果、多代理、webhooks、記憶體、用戶端模式、入職、API 參考）。對於 Python、TypeScript、Go、Ruby、PHP 和 Java，閱讀 `{lang}/managed-agents/README.md` 以獲取程式碼範例。對於 cURL，閱讀 `curl/managed-agents.md`。**代理是持久的 — 建立一次，依 ID 引用。** 儲存由 `agents.create` 回傳的代理 ID，並將其傳遞給後續所有的 `sessions.create`；不要在請求路徑中呼叫 `agents.create`。Anthropic CLI (`ant`) 是一種從版本控制的 YAML 建立代理和環境的便捷方式 — 參見 `shared/anthropic-cli.md`。如果你需要的綁定沒有顯示在語言 README 中，請從 `shared/live-sources.md` WebFetch 相關項目，而不是猜測。C# 有 beta 版本的管理代理支援 — 詳細資訊請參見 `csharp/claude-api.md`，或使用 `curl/managed-agents.md` 作為原始 HTTP 參考。
 
 **當使用者想從頭開始設定管理代理時**（例如「我該如何開始」、「引導我建立一個」、「設定一個新的代理」）：閱讀 `shared/managed-agents-onboarding.md` 並執行其訪談 — 與 `managed-agents-onboard` 子命令的流程相同。
 
@@ -259,10 +262,12 @@ license: 完整條款請見 LICENSE.txt
 
 **長時間對話 (可能超過上下文窗口)：**
 → 閱讀 `{lang}/claude-api/README.md` — 請參見壓縮區段 (Compaction)
-**遷移至較新模型 (Opus 4.7 / Opus 4.6 / Sonnet 4.6) 或取代已退役模型：**
+**遷移至較新模型 (Opus 4.8 / Opus 4.7 / Opus 4.6 / Sonnet 4.6) 或取代已退役模型：**
 → 閱讀 `shared/model-migration.md`
 **提示詞快取 / 最佳化快取 / 「為什麼我的快取命中率很低」：**
 → 閱讀 `shared/prompt-caching.md` + `{lang}/claude-api/README.md` (提示詞快取區段)
+**計算檔案 / 提示詞 / 差異中的 token（「X 有多少個 token」）：**
+→ 閱讀 `shared/token-counting.md` — 使用 `messages.count_tokens`，絕不要使用 `tiktoken`
 
 **函式呼叫 / 工具使用 / 代理：**
 → 閱讀 `{lang}/claude-api/README.md` + `shared/tool-use-concepts.md` + `{lang}/claude-api/tool-use.md`
@@ -277,7 +282,7 @@ license: 完整條款請見 LICENSE.txt
 → 閱讀 `{lang}/claude-api/README.md` + `{lang}/claude-api/files-api.md`
 
 **管理代理 (具有工作區的伺服器管理有狀態代理)：**
-→ 閱讀 `shared/managed-agents-overview.md` + 其餘的 `shared/managed-agents-*.md` 檔案。對於 Python、TypeScript、Go、Ruby、PHP 和 Java，請閱讀 `{lang}/managed-agents/README.md` 以獲取程式碼範例。對於 cURL，請閱讀 `curl/managed-agents.md`。**代理是持久的 — 建立一次，透過 ID 參照。** 儲存 `agents.create` 回傳的代理 ID，並將其傳遞給每一個後續的 `sessions.create`；不要在請求路徑中呼叫 `agents.create`。Anthropic CLI 是一種從版本控制的 YAML 建立代理和環境的便利方式（URL 在 `shared/live-sources.md` 中）。如果你需要的綁定未在語言 README 中顯示，請從 `shared/live-sources.md` WebFetch 相關項目，而非猜測。C# 目前不支援管理代理 — 請使用 `curl/managed-agents.md` 中的原始 HTTP 作為參考。
+→ 閱讀 `shared/managed-agents-overview.md` + 其餘的 `shared/managed-agents-*.md` 檔案。對於 Python、TypeScript、Go、Ruby、PHP 和 Java，請閱讀 `{lang}/managed-agents/README.md` 以獲取程式碼範例。對於 cURL，請閱讀 `curl/managed-agents.md`。**代理是持久的 — 建立一次，透過 ID 參照。** 儲存 `agents.create` 回傳的代理 ID，並將其傳遞給每一個後續的 `sessions.create`；不要在請求路徑中呼叫 `agents.create`。Anthropic CLI (`ant`) 是一種從版本控制的 YAML 建立代理和環境的便利方式 — 參見 `shared/anthropic-cli.md`。如果你需要的綁定未在語言 README 中顯示，請從 `shared/live-sources.md` WebFetch 相關項目，而非猜測。C# 有 beta 版本的管理代理支援 — 詳細資訊請參見 `csharp/claude-api.md`，或使用 `curl/managed-agents.md` 作為原始 HTTP 參考。
 
 ### Claude API (完整檔案參考)
 
@@ -314,13 +319,13 @@ license: 完整條款請見 LICENSE.txt
 ## 常見陷阱
 
 - 將檔案或內容傳遞給 API 時不要截斷輸入。如果內容太長無法放入上下文窗口，通知使用者並討論選項（分塊、摘要等）而非靜默截斷。
-- **Opus 4.7 思考：** 僅限自適應。`thinking: {type: "enabled", budget_tokens: N}` 在 Opus 4.7 上回傳 400 — `budget_tokens` 已完全移除（包含 `temperature`、`top_p`、`top_k` 也是）。使用 `thinking: {type: "adaptive"}`。
+- **Opus 4.8 / 4.7 思考：** 僅限自適應。`thinking: {type: "enabled", budget_tokens: N}` 在 Opus 4.7 上回傳 400 — `budget_tokens` 已完全移除（包含 `temperature`、`top_p`、`top_k` 也是）。使用 `thinking: {type: "adaptive"}`。Opus 4.8 繼承了 4.7 的這個介面，沒有新的破壞性變更。
 - **Opus 4.6 / Sonnet 4.6 思考：** 使用 `thinking: {type: "adaptive"}` — 新的 4.6 程式碼請**不要**使用 `budget_tokens`（在 Opus 4.6 和 Sonnet 4.6 上皆已棄用；關於現有程式碼的漸進遷移，請參見 `shared/model-migration.md` 中的過渡逃生口 — 注意此例外情況不適用於 Opus 4.7）。舊模型的 `budget_tokens` 必須小於 `max_tokens`（最少 1024）。這如果設定錯誤會拋出錯誤。
-- **4.6/4.7 系列 prefill 已移除：** 助手訊息 prefill (last-assistant-turn prefills) 在 Opus 4.6、Opus 4.7 和 Sonnet 4.6 上會回傳 400 錯誤。改用結構化輸出（`output_config.format`）或系統提示指令來控制回應格式。
-- **編輯前確認遷移範圍：** 當使用者要求將程式碼遷移到較新的 Claude 模型，但未命名特定檔案、目錄或檔案清單時，請**先詢問要套用的範圍** — 是整個工作目錄、特定子目錄還是特定的一組檔案。在使用者確認之前不要開始編輯。「遷移我的程式碼庫」、「將我的專案移至 X」、「升級至 Sonnet 4.6」或單純的「遷移至 Opus 4.7」等命令式說法**仍然模稜兩可** — 它們告訴你做什麼，但沒告訴你在哪裡做，所以要提問。只有當提示明確指出確切檔案、特定目錄或明確檔案清單（「遷移 `app.py`」、「遷移 `services/` 下的所有內容」、「更新 `a.py` 和 `b.py`」）時，才無需詢問直接進行。參見 `shared/model-migration.md` 步驟 0。
-- **`max_tokens` 預設值：** 不要低估 `max_tokens` — 達到上限會使輸出在中途被截斷，並需要重試。對於非串流請求，預設為 `~16000`（保持回應在 SDK HTTP 超時限制內）。對於串流請求，預設為 `~64000`（不需擔心超時，給予模型更多空間）。除非有明確理由（例如分類任務約 `~256`、成本上限或故意要求簡短輸出），否則不要設定更低的值。
-- **128K 輸出 tokens：** Opus 4.6 和 Opus 4.7 支援最多 128K `max_tokens`，但 SDK 對大型 `max_tokens` 需要串流以避免 HTTP 超時。使用 `.stream()` 搭配 `.get_final_message()` / `.finalMessage()`。
-- **工具呼叫 JSON 解析 (4.6/4.7 系列)：** Opus 4.6、Opus 4.7 和 Sonnet 4.6 可能在工具呼叫 `input` 欄位中產生不同的 JSON 字串跳脫 (例如，Unicode 或正斜線跳脫)。始終使用 `json.loads()` / `JSON.parse()` 解析工具輸入 — 絕不對序列化的輸入做原始字串比對。
+- **4.6/4.7/4.8 系列 prefill 已移除：** 助手訊息 prefill (last-assistant-turn prefills) 在 Opus 4.6、Opus 4.7、Opus 4.8 和 Sonnet 4.6 上會回傳 400 錯誤。改用結構化輸出（`output_config.format`）或系統提示指令來控制回應格式。
+- **編輯前確認遷移範圍：** 當使用者要求將程式碼遷移到較新的 Claude 模型，但未命名特定檔案、目錄或檔案清單時，請**先詢問要套用的範圍** — 是整個工作目錄、特定子目錄還是特定的一組檔案。在使用者確認之前不要開始編輯。「遷移我的程式碼庫」、「將我的專案移至 X」、「升級至 Sonnet 4.6」或單純的「遷移至 Opus 4.8」等命令式說法**仍然模稜兩可** — 它們告訴你做什麼，但沒告訴你在哪裡做，所以要提問。只有當提示明確指出確切檔案、特定目錄或明確檔案清單（「遷移 `app.py`」、「遷移 `services/` 下的所有內容」、「更新 `a.py` 和 `b.py`」）時，才無需詢問直接進行。參見 `shared/model-migration.md` 步驟 0。
+- **`max_tokens` 預設值：** 不要低估 `max_tokens` — 達到上限會使輸出在中途被截斷，並需要重試。對於非串流請求，預設為 `~16000`（保持回應在 SDK HTTP 超時限制內）。對於串流請求，預設為 `~64000`（不需擔心超時，給予模型更多空間）。除非有明確理由（例如分類任務約 `~256`、成本上限故意要求簡短輸出，或針對快取預熱的 **`max_tokens: 0`**（參見 `shared/prompt-caching.md` → 預熱）），否則不要設定更低的值。
+- **128K 輸出 tokens：** Opus 4.6、Opus 4.7 和 Opus 4.8 支援最多 128K `max_tokens`，但 SDK 對大型 `max_tokens` 需要串流以避免 HTTP 超時。使用 `.stream()` 搭配 `.get_final_message()` / `.finalMessage()`。
+- **工具呼叫 JSON 解析 (4.6/4.7/4.8 系列)：** Opus 4.6、Opus 4.7、Opus 4.8 和 Sonnet 4.6 可能在工具呼叫 `input` 欄位中產生不同的 JSON 字串跳脫 (例如，Unicode 或正斜線跳脫)。始終使用 `json.loads()` / `JSON.parse()` 解析工具輸入 — 絕不對序列化的輸入做原始字串比對。
 - **結構化輸出 (所有模型)：** 在 `messages.create()` 上使用 `output_config: {format: {...}}` 而非已棄用的 `output_format` 參數。這是一個通用的 API 變更，不僅限於 4.6 版。
 - **不要重新實作 SDK 功能：** SDK 提供高階輔助方法 — 使用它們而非從頭建構。具體來說：使用 `stream.finalMessage()` 而非將 `.on()` 事件包裝在 `new Promise()` 中；使用強型別例外類別（例如 `Anthropic.RateLimitError`）而非對錯誤訊息進行字串比對；使用 SDK 型別（`Anthropic.MessageParam`、`Anthropic.Tool`、`Anthropic.Message` 等）而非重新定義等效的介面。
 - **不要為 SDK 資料結構定義自訂型別：** SDK 匯出所有 API 物件的型別。訊息請使用 `Anthropic.MessageParam`，工具定義請使用 `Anthropic.Tool`，工具結果請使用 `Anthropic.ToolUseBlock` / `Anthropic.ToolResultBlockParam`，回應請使用 `Anthropic.Message`。自行定義 `interface ChatMessage { role: string; content: unknown }` 會重複 SDK 已提供的內容並失去型別安全。
