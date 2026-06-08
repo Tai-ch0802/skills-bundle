@@ -1,6 +1,6 @@
 ---
 name: react-best-practices
-description: "來自 Vercel Engineering 的 React 和 Next.js 效能最佳化。用於建構 React 元件、最佳化效能、消除瀑布流、減少打包大小、審查效能問題或實作伺服器/客戶端最佳化。"
+description: React 與 Next.js 效能最佳化（來自 Vercel 工程團隊）。在建構 React 元件、最佳化效能、消除瀑布流、減少套件大小、審查程式碼效能問題或實作伺服器端/客戶端最佳化時使用。
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 ---
 

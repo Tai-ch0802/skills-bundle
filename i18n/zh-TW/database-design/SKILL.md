@@ -1,6 +1,6 @@
 ---
 name: database-design
-description: "資料庫設計原則與決策。Schema 設計、索引策略、ORM 選擇、無伺服器資料庫。"
+description: 資料庫設計原則與決策。Schema 設計、索引策略、ORM 選擇、無伺服器資料庫。
 allowed-tools: Read, Write, Edit, Glob, Grep
 ---
 

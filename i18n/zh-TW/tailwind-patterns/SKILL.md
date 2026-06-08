@@ -1,6 +1,6 @@
 ---
 name: tailwind-patterns
-description: "Tailwind CSS v4 原則。CSS 優先配置、容器查詢、現代模式、設計 token 架構。"
+description: Tailwind CSS v4 原則。CSS 優先配置、容器查詢、現代模式、設計 Token 架構。
 allowed-tools: Read, Write, Edit, Glob, Grep
 ---
 

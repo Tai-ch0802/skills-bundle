@@ -1,6 +1,6 @@
 ---
 name: mobile-design
-description: "iOS 和 Android 應用的行動優先設計思維與決策。觸控互動、效能模式、平台慣例。教導原則而非固定值。用於建構 React Native、Flutter 或原生行動應用。"
+description: iOS 和 Android 應用程式的行動優先設計思維與決策。觸控互動、效能模式、平台慣例。教授原則，而非固定值。用於建構 React Native、Flutter 或原生行動應用程式時。
 allowed-tools: Read, Glob, Grep, Bash
 ---
 

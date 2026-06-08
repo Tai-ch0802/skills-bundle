@@ -1,6 +1,6 @@
 ---
 name: red-team-tactics
-description: "基於 MITRE ATT&CK 的紅隊戰術原則。攻擊階段、規避偵測、報告。"
+description: 基於 MITRE ATT&CK 的紅隊戰術原則。攻擊階段、規避偵測、報告。
 allowed-tools: Read, Glob, Grep
 ---
 

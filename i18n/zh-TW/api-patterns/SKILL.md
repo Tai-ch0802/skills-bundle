@@ -1,6 +1,6 @@
 ---
 name: api-patterns
-description: "API 設計原則與決策。REST vs GraphQL vs tRPC 選擇、回應格式、版本控制、分頁。"
+description: API 設計原則與決策。REST vs GraphQL vs tRPC 選擇、回應格式、版本控制、分頁。
 allowed-tools: Read, Write, Edit, Glob, Grep
 ---
 

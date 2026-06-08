@@ -1,6 +1,6 @@
 ---
 name: performance-profiling
-description: "效能分析原則。測量、分析與最佳化技術。"
+description: 效能分析原則。量測、分析與最佳化技術。
 allowed-tools: Read, Glob, Grep, Bash
 ---
 

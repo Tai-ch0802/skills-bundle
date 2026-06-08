@@ -1,6 +1,6 @@
 ---
 name: web-design-guidelines
-description: "審查 UI 程式碼是否符合 Web Interface Guidelines。用於「審查我的 UI」、「檢查無障礙」、「稽核設計」、「審查 UX」或「檢查最佳實踐」。"
+description: 檢查 UI 程式碼是否符合 Web 介面指南。當被要求「審查我的 UI」、「檢查無障礙設計」、「稽核設計」、「審查 UX」或「檢查我的網站是否符合最佳實務」時使用。
 metadata:
   author: vercel
   version: "1.0.0"

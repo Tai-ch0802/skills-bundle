@@ -1,6 +1,6 @@
 ---
 name: plan-writing
-description: "結構化任務規劃，包含清晰的分解、依賴關係和驗證標準。用於實作功能、重構或任何多步驟工作。"
+description: 具有清晰分解、相依性和驗證準則的結構化任務規劃。在實作功能、重構或任何多步驟工作時使用。
 allowed-tools: Read, Glob, Grep
 ---
 

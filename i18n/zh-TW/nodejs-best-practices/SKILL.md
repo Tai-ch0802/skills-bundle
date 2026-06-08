@@ -1,6 +1,6 @@
 ---
 name: nodejs-best-practices
-description: "Node.js 開發原則與決策。框架選擇、非同步模式、安全性與架構。教你思考而非複製。"
+description: Node.js 開發原則與決策。框架選擇、非同步模式、安全性與架構。教授思考方式，而非複製貼上。
 allowed-tools: Read, Write, Edit, Glob, Grep
 ---
 

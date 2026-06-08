@@ -1,6 +1,6 @@
 ---
 name: documentation-templates
-description: "文件範本與結構指南。README、API 文件、程式碼註解與 AI 友善文件。"
+description: 文件範本與結構指南。README、API 文件、程式碼註解以及對 AI 友善的文件。
 allowed-tools: Read, Glob, Grep
 ---
 

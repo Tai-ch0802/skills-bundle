@@ -1,6 +1,6 @@
 ---
 name: i18n-localization
-description: "國際化與在地化模式。偵測寫死字串、管理翻譯、語系檔案、RTL 支援。"
+description: 國際化與本地化模式。偵測寫死的字串、管理翻譯、本地化檔案、RTL 支援。
 allowed-tools: Read, Glob, Grep
 ---
 

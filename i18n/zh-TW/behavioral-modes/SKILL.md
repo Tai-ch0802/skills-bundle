@@ -1,6 +1,6 @@
 ---
 name: behavioral-modes
-description: "AI 操作模式（腦力激盪、實作、除錯、審查、教學、發布、協調）。用於根據任務類型調整行為。"
+description: AI 操作模式（腦力激盪、實作、除錯、審查、教學、發布、協調）。用於根據任務類型調整行為。
 allowed-tools: Read, Glob, Grep
 ---
 

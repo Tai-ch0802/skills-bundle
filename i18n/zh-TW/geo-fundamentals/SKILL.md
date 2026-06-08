@@ -1,6 +1,6 @@
 ---
 name: geo-fundamentals
-description: "生成式引擎最佳化，針對 AI 搜尋引擎（ChatGPT、Claude、Perplexity）。"
+description: 生成式引擎最佳化（GEO），針對 AI 搜尋引擎（ChatGPT、Claude、Perplexity）。
 allowed-tools: Read, Glob, Grep
 ---
 

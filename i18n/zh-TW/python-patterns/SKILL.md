@@ -1,6 +1,6 @@
 ---
 name: python-patterns
-description: "Python 開發原則與決策。框架選擇、非同步模式、型別提示、專案結構。教你思考而非複製。"
+description: Python 開發原則與決策。框架選擇、非同步模式、型別提示、專案結構。教授思考方式，而非複製貼上。
 allowed-tools: Read, Write, Edit, Glob, Grep
 ---
 

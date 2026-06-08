@@ -1,6 +1,6 @@
 ---
 name: parallel-agents
-description: "多代理協調模式。當多個獨立任務可使用不同領域專長並行執行，或全面分析需要多角度觀點時使用。"
+description: 多代理協調模式。當多個獨立任務可以由不同領域專家執行，或全面分析需要多種視角時使用。
 allowed-tools: Read, Glob, Grep
 ---
 

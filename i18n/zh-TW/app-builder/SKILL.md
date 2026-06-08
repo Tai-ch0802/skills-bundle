@@ -1,6 +1,6 @@
 ---
 name: app-builder
-description: "主要應用程式建構協調器。從自然語言請求建立全端應用。判定專案類型、選擇技術堆疊、協調代理。"
+description: 主要應用程式建構協調器。從自然語言需求建立全端應用程式。決定專案類型、選擇技術堆疊、協調代理。
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent
 ---
 
