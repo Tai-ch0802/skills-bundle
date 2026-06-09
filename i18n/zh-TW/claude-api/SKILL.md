@@ -1,6 +1,9 @@
 ---
 name: claude-api
-description: "使用 Claude API / Anthropic SDK 建構、除錯和最佳化應用程式。使用此技能建構的應用程式應包含提示快取 (prompt caching)。也處理在 Claude 模型版本之間遷移現有 Claude API 程式碼（4.5 → 4.6，4.6 → 4.7，替換已退役模型）。觸發時機：程式碼匯入 anthropic/@anthropic-ai/sdk；使用者要求使用 Claude API、Anthropic SDKs 或 Managed Agents (/v1/agents, /v1/sessions, /v1/environments)；使用者在檔案中新增/修改/調整 Claude 功能（快取、思考、壓縮、工具使用、批次、檔案、引用、記憶）或模型（Opus/Sonnet/Haiku）；關於 Anthropic SDK 專案中提示快取/快取命中率的問題。不觸發：檔案匯入 `openai`/其他提供者 SDK，檔案名稱類似 `*-openai.py`/`*-generic.py`，與提供者無關的程式碼，一般程式設計/機器學習。"
+description: |-
+  Claude API / Anthropic SDK 參考 — 模型 ID、定價、參數、串流傳輸、工具使用、MCP、代理、快取、Token 計算、模型遷移。
+  觸發時機 — 在打開目標檔案前閱讀；不要因為它「看起來只有一行」而跳過 — 每當：提示詞以任何形式提到 Claude/Anthropic (Claude, Anthropic, Fable, Opus, Sonnet, Haiku, `anthropic`, `@anthropic-ai`, `claude-*`, `us.anthropic.*`, `[1m]`)；使用者詢問關於 LLM 的問題（定價/模型選擇/限制/快取）— 絕不憑記憶回答；或者任務具有 LLM 的特徵但未指明提供商（代理/MCP/工具定義/多代理/RAG/LLM 評判/電腦使用；對自然語言進行生成/總結/提取/分類/重寫/對話；除錯拒絕/截斷/串流/工具呼叫/token 相關問題）。
+  僅在正在處理其他提供商時跳過（覆蓋所有觸發條件）：查詢中提及 OpenAI/GPT/Gemini/Llama/Mistral/Cohere/Ollama；或對專案進行 `grep -rE 'openai|langchain_openai|google.generativeai|genai|mistralai|cohere|ollama'` 搜尋有命中（如果未指明提供商，請先執行此 grep 搜尋 — 不要閱讀檔案）。
 license: 完整條款請見 LICENSE.txt
 ---
 # 使用 Claude 建構 LLM 驅動的應用程式
@@ -26,7 +29,7 @@ license: 完整條款請見 LICENSE.txt
 
 除非使用者另有要求：
 
-對於 Claude 模型版本，請使用 Claude Opus 4.7，可透過精確模型字串 `claude-opus-4-7` 存取。預設使用自適應思維（`thinking: {type: "adaptive"}`）處理任何稍微複雜的任務。最後，對於可能涉及長輸入、長輸出或高 `max_tokens` 的請求，預設使用串流傳輸 — 這可以防止請求超時。使用 SDK 的 `.get_final_message()` / `.finalMessage()` 輔助方法取得完整回應（如果不需要處理個別串流事件）。
+對於 Claude 模型版本，請使用 Claude Opus 4.8，可透過精確模型字串 `claude-opus-4-8` 存取。預設使用自適應思維（`thinking: {type: "adaptive"}`）處理任何稍微複雜的任務。最後，對於可能涉及長輸入、長輸出或高 `max_tokens` 的請求，預設使用串流傳輸 — 這可以防止請求超時。使用 SDK 的 `.get_final_message()` / `.finalMessage()` 輔助方法取得完整回應（如果不需要處理個別串流事件）。
 
 ---
 
@@ -200,7 +203,7 @@ license: 完整條款請見 LICENSE.txt
 
 ## 壓縮 (快速參考)
 
-**Beta，Opus 4.7、Opus 4.6 和 Sonnet 4.6。** 對於可能超過 1M 上下文窗口的長時間對話，請啟用伺服器端壓縮。API 會在接近觸發閾值（預設值：150K tokens）時自動總結早期的上下文。需要 beta header `compact-2026-01-12`。
+**Beta，Fable 5、Opus 4.8、Opus 4.7、Opus 4.6 和 Sonnet 4.6。** 對於可能超過 1M 上下文窗口的長時間對話，請啟用伺服器端壓縮。API 會在接近觸發閾值（預設值：150K tokens）時自動總結早期的上下文。需要 beta header `compact-2026-01-12`。
 
 **極度重要：** 在每一輪都要將 `response.content`（不只是文字）附加回你的訊息中。回應中的壓縮區塊必須保留 — API 會使用它們在下一個請求時取代已壓縮的歷史記錄。僅萃取文本字串並附加它將會默默遺失壓縮狀態。
 
@@ -259,8 +262,10 @@ license: 完整條款請見 LICENSE.txt
 
 **長時間對話 (可能超過上下文窗口)：**
 → 閱讀 `{lang}/claude-api/README.md` — 請參見壓縮區段 (Compaction)
-**遷移至較新模型 (Opus 4.7 / Opus 4.6 / Sonnet 4.6) 或取代已退役模型：**
+**遷移至較新模型 (Fable 5 / Opus 4.8 / Opus 4.7 / Opus 4.6 / Sonnet 4.6) 或取代已退役模型：**
 → 閱讀 `shared/model-migration.md`
+**提示或微調 Fable 5 (長回合、effort、冗長度、自主執行、子代理)：**
+→ 閱讀 `shared/model-migration.md` → 遷移至 Fable 5 → 行為轉變 (可透過提示調整) + 長時間執行的代理建議
 **提示詞快取 / 最佳化快取 / 「為什麼我的快取命中率很低」：**
 → 閱讀 `shared/prompt-caching.md` + `{lang}/claude-api/README.md` (提示詞快取區段)
 
@@ -314,13 +319,15 @@ license: 完整條款請見 LICENSE.txt
 ## 常見陷阱
 
 - 將檔案或內容傳遞給 API 時不要截斷輸入。如果內容太長無法放入上下文窗口，通知使用者並討論選項（分塊、摘要等）而非靜默截斷。
-- **Opus 4.7 思考：** 僅限自適應。`thinking: {type: "enabled", budget_tokens: N}` 在 Opus 4.7 上回傳 400 — `budget_tokens` 已完全移除（包含 `temperature`、`top_p`、`top_k` 也是）。使用 `thinking: {type: "adaptive"}`。
-- **Opus 4.6 / Sonnet 4.6 思考：** 使用 `thinking: {type: "adaptive"}` — 新的 4.6 程式碼請**不要**使用 `budget_tokens`（在 Opus 4.6 和 Sonnet 4.6 上皆已棄用；關於現有程式碼的漸進遷移，請參見 `shared/model-migration.md` 中的過渡逃生口 — 注意此例外情況不適用於 Opus 4.7）。舊模型的 `budget_tokens` 必須小於 `max_tokens`（最少 1024）。這如果設定錯誤會拋出錯誤。
-- **4.6/4.7 系列 prefill 已移除：** 助手訊息 prefill (last-assistant-turn prefills) 在 Opus 4.6、Opus 4.7 和 Sonnet 4.6 上會回傳 400 錯誤。改用結構化輸出（`output_config.format`）或系統提示指令來控制回應格式。
-- **編輯前確認遷移範圍：** 當使用者要求將程式碼遷移到較新的 Claude 模型，但未命名特定檔案、目錄或檔案清單時，請**先詢問要套用的範圍** — 是整個工作目錄、特定子目錄還是特定的一組檔案。在使用者確認之前不要開始編輯。「遷移我的程式碼庫」、「將我的專案移至 X」、「升級至 Sonnet 4.6」或單純的「遷移至 Opus 4.7」等命令式說法**仍然模稜兩可** — 它們告訴你做什麼，但沒告訴你在哪裡做，所以要提問。只有當提示明確指出確切檔案、特定目錄或明確檔案清單（「遷移 `app.py`」、「遷移 `services/` 下的所有內容」、「更新 `a.py` 和 `b.py`」）時，才無需詢問直接進行。參見 `shared/model-migration.md` 步驟 0。
-- **`max_tokens` 預設值：** 不要低估 `max_tokens` — 達到上限會使輸出在中途被截斷，並需要重試。對於非串流請求，預設為 `~16000`（保持回應在 SDK HTTP 超時限制內）。對於串流請求，預設為 `~64000`（不需擔心超時，給予模型更多空間）。除非有明確理由（例如分類任務約 `~256`、成本上限或故意要求簡短輸出），否則不要設定更低的值。
-- **128K 輸出 tokens：** Opus 4.6 和 Opus 4.7 支援最多 128K `max_tokens`，但 SDK 對大型 `max_tokens` 需要串流以避免 HTTP 超時。使用 `.stream()` 搭配 `.get_final_message()` / `.finalMessage()`。
-- **工具呼叫 JSON 解析 (4.6/4.7 系列)：** Opus 4.6、Opus 4.7 和 Sonnet 4.6 可能在工具呼叫 `input` 欄位中產生不同的 JSON 字串跳脫 (例如，Unicode 或正斜線跳脫)。始終使用 `json.loads()` / `JSON.parse()` 解析工具輸入 — 絕不對序列化的輸入做原始字串比對。
+- **Fable 5 / Opus 4.8 / 4.7 思考：** 僅限自適應。`thinking: {type: "enabled", budget_tokens: N}` 回傳 400 — `budget_tokens` 已完全移除（包含 `temperature`、`top_p`、`top_k` 也是）。使用 `thinking: {type: "adaptive"}`。Opus 4.8 繼承了 4.7 的介面，沒有新的破壞性變更；Fable 5 增加了一個 — 明確的 `thinking: {type: "disabled"}` 會回傳 400 (在 4.7/4.8 上是接受的)；請改為完全省略該參數。
+- **Opus 4.6 / Sonnet 4.6 思考：** 使用 `thinking: {type: "adaptive"}` — 新的 4.6 程式碼請**不要**使用 `budget_tokens`（在 Opus 4.6 和 Sonnet 4.6 上皆已棄用；關於現有程式碼的漸進遷移，請參見 `shared/model-migration.md` 中的過渡逃生口 — 注意此例外情況不適用於 Fable 5、Opus 4.7 或 4.8）。舊模型的 `budget_tokens` 必須小於 `max_tokens`（最少 1024）。這如果設定錯誤會拋出錯誤。
+- **Prefill 移除 (Fable 5 和 4.6/4.7/4.8 系列)：** 助手訊息 prefill (last-assistant-turn prefills) 在 Fable 5、Opus 4.6、Opus 4.7、Opus 4.8 和 Sonnet 4.6 上會回傳 400 錯誤。改用結構化輸出（`output_config.format`）或系統提示指令來控制回應格式。（一個例外：fallback-credit prefill 宣告 — 當使用 `fallback_has_prefill_claim: true` 兌換額度時，伺服器會接受回音助手訊息；參見遷移指南的拒絕區塊。）
+- **Fable 5 `refusal` stop reason：** 安全分類器可能會拒絕請求 — 會收到成功的 HTTP 200 且 `stop_reason: "refusal"` (預先輸出：空的 `content`，不計費；中途串流：部分輸出計費 — 丟棄它)。在讀取 `response.content[0]` 之前檢查 `stop_reason`，否則你會在被拒絕的請求上遇到索引錯誤。若要在另一個模型上重試，原樣重播歷史紀錄是可行的 — 其他模型會默默忽略被拒絕模型的思考區塊 — 但被忽略的區塊仍然會收取輸入 token 費用，因此若決定徹底切換模型則需將其移除 (例外：fallback-credit 兌換必須完全原樣回傳被拒絕的主體，包括思考區塊)。
+- **Fable 5 tokenizer：** 對於相同的內容，與 Opus 級別的模型相比，token 數量增加約 30%。在其他模型上測量的 Token 計數、上下文窗口預算和 `max_tokens` 值無法直接轉移 — 請傳遞 `model: "claude-fable-5"` 使用 `count_tokens` 重新測量（回應會包含兩種 tokenizer 的計數）。
+- **編輯前確認遷移範圍：** 當使用者要求將程式碼遷移到較新的 Claude 模型，但未命名特定檔案、目錄或檔案清單時，請**先詢問要套用的範圍** — 是整個工作目錄、特定子目錄還是特定的一組檔案。在使用者確認之前不要開始編輯。「遷移我的程式碼庫」、「將我的專案移至 X」、「升級至 Sonnet 4.6」或單純的「遷移至 Opus 4.8」等命令式說法**仍然模稜兩可** — 它們告訴你做什麼，但沒告訴你在哪裡做，所以要提問。只有當提示明確指出確切檔案、特定目錄或明確檔案清單（「遷移 `app.py`」、「遷移 `services/` 下的所有內容」、「更新 `a.py` 和 `b.py`」）時，才無需詢問直接進行。參見 `shared/model-migration.md` 步驟 0。
+- **`max_tokens` 預設值：** 不要低估 `max_tokens` — 達到上限會使輸出在中途被截斷，並需要重試。對於非串流請求，預設為 `~16000`（保持回應在 SDK HTTP 超時限制內）。對於串流請求，預設為 `~64000`（不需擔心超時，給予模型更多空間）。除非有明確理由（例如分類任務約 `~256`、成本上限或故意要求簡短輸出），否則不要設定更低的值。或為快取預熱設定 **`max_tokens: 0`**（參見 `shared/prompt-caching.md` → 預熱）。
+- **128K 輸出 tokens：** Fable 5、Opus 4.6、Opus 4.7 和 Opus 4.8 支援最多 128K `max_tokens`，但 SDK 對大型 `max_tokens` 需要串流以避免 HTTP 超時。使用 `.stream()` 搭配 `.get_final_message()` / `.finalMessage()`。
+- **工具呼叫 JSON 解析 (Fable 5 和 4.6/4.7/4.8 系列)：** Fable 5、Opus 4.6、Opus 4.7、Opus 4.8 和 Sonnet 4.6 可能在工具呼叫 `input` 欄位中產生不同的 JSON 字串跳脫 (例如，Unicode 或正斜線跳脫)。始終使用 `json.loads()` / `JSON.parse()` 解析工具輸入 — 絕不對序列化的輸入做原始字串比對。
 - **結構化輸出 (所有模型)：** 在 `messages.create()` 上使用 `output_config: {format: {...}}` 而非已棄用的 `output_format` 參數。這是一個通用的 API 變更，不僅限於 4.6 版。
 - **不要重新實作 SDK 功能：** SDK 提供高階輔助方法 — 使用它們而非從頭建構。具體來說：使用 `stream.finalMessage()` 而非將 `.on()` 事件包裝在 `new Promise()` 中；使用強型別例外類別（例如 `Anthropic.RateLimitError`）而非對錯誤訊息進行字串比對；使用 SDK 型別（`Anthropic.MessageParam`、`Anthropic.Tool`、`Anthropic.Message` 等）而非重新定義等效的介面。
 - **不要為 SDK 資料結構定義自訂型別：** SDK 匯出所有 API 物件的型別。訊息請使用 `Anthropic.MessageParam`，工具定義請使用 `Anthropic.Tool`，工具結果請使用 `Anthropic.ToolUseBlock` / `Anthropic.ToolResultBlockParam`，回應請使用 `Anthropic.Message`。自行定義 `interface ChatMessage { role: string; content: unknown }` 會重複 SDK 已提供的內容並失去型別安全。
