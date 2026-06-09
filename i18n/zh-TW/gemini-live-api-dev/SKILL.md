@@ -1,6 +1,6 @@
 ---
 name: gemini-live-api-dev
-description: "處理使用 Gemini Live API 的即時、雙向串流應用程式時使用此技能。涵蓋基於 WebSocket 的音訊/視訊/文字串流、語音活動偵測 (VAD)、原生音訊功能、函式呼叫、會話管理、用戶端身分驗證的臨時權杖，以及所有 Live API 設定選項。涵蓋的 SDK - google-genai (Python)、@google/genai (JavaScript/TypeScript)。"
+description: "處理使用 Gemini Live API 的即時、雙向串流應用程式時使用此技能。涵蓋基於 WebSocket 的音訊/視訊/文字串流、語音活動偵測 (VAD)、原生音訊功能、函式呼叫、會話管理、用戶端身分驗證的臨時權杖、即時翻譯，以及所有 Live API 設定選項。涵蓋的 SDK - google-genai (Python)、@google/genai (JavaScript/TypeScript)。"
 ---
 
 # Gemini Live API 開發技能
@@ -27,6 +27,7 @@ Live API 支援透過 WebSockets 與 Gemini 進行**低延遲、即時的語音�
 ## 模型
 
 - `gemini-3.1-flash-live-preview` — 針對低延遲、即時對話進行最佳化。原生音訊輸出、思考（透過 `thinkingLevel`）。128k 上下文視窗。**這是所有 Live API 案例的建議模型。**
+- `gemini-3.5-live-translate-preview` — 即時串流翻譯模型。
 
 > [!WARNING]
 > 以下 Live API 模型**已棄用**並將被關閉。請遷移至 `gemini-3.1-flash-live-preview`。
@@ -208,9 +209,50 @@ if (content?.interrupted) { /* 停止播放，清除音訊佇列 */ }
 
 ---
 
+## 即時翻譯 (Gemini Live Translate)
+
+Live API 支援針對 70 多種語言進行即時、低延遲的語音 (音訊) 串流翻譯。如需設定選項和功能的完整詳細資訊，請參閱[即時翻譯指南 (Live Translate Guide)](https://ai.google.dev/gemini-api/docs/live-api/live-translate.md.txt)。
+
+### 模型
+- `gemini-3.5-live-translate-preview` — 所有即時翻譯案例的建議翻譯模型。
+
+### 設定 (`TranslationConfig`)
+
+若要啟用翻譯，請在您的 Live session 設定中指定 `TranslationConfig` 物件：
+
+- **Python SDK**：在 `LiveConnectConfig` 上使用 `translation_config` 設定連線：
+  ```python
+  config = types.LiveConnectConfig(
+      response_modalities=[types.Modality.AUDIO],
+      translation_config=types.TranslationConfig(
+          target_language_code="es",  # 目標語言代碼 (例如 es, fr, pl)
+          echo_target_language=True,
+      ),
+      input_audio_transcription=types.AudioTranscriptionConfig(),
+      output_audio_transcription=types.AudioTranscriptionConfig(),
+  )
+  ```
+- **Raw WebSockets**：將 `translationConfig` 放置在 `generationConfig` 內：
+  ```json
+  {
+    "setup": {
+      "model": "models/gemini-3.5-live-translate-preview",
+      "generationConfig": {
+        "responseModalities": ["AUDIO"],
+        "translationConfig": {
+          "targetLanguageCode": "es",
+          "echoTargetLanguage": true
+        }
+      }
+    }
+  }
+  ```
+
+---
+
 ## 限制
 
-- **回應模態** — 每個會話僅限 `TEXT` **或** `AUDIO`，無法兩者兼具
+- **回應模態** — 每個會話僅限 `TEXT` **或** `AUDIO`，無法兩者兼具。原生音訊模型僅支援音訊。
 - **純音訊會話** — 不壓縮情況下可達 15 分鐘
 - **音訊+視訊會話** — 不壓縮情況下可達 2 分鐘
 - **連線壽命** — 約 10 分鐘（請使用會話恢復）
@@ -274,6 +316,7 @@ if (content?.interrupted) { /* 停止播放，清除音訊佇列 */ }
 > 以下並非所有文件頁面。請使用 `llms.txt` 索引來探索可用的文件頁面。
 
 - [Live API 概述](https://ai.google.dev/gemini-api/docs/live.md.txt) — 快速入門、原始 WebSocket 使用
+- [即時翻譯 (Live Translate)](https://ai.google.dev/gemini-api/docs/live-api/live-translate.md.txt) — 翻譯的設定選項和功能
 - [Live API 功能指南](https://ai.google.dev/gemini-api/docs/live-guide.md.txt) — 語音設定、轉錄設定、原生音訊（思考）、VAD 設定、媒體解析度
 - [Live API 工具使用](https://ai.google.dev/gemini-api/docs/live-tools.md.txt) — 函式呼叫（同步）、Google 搜尋背景資訊
 - [會話管理](https://ai.google.dev/gemini-api/docs/live-session.md.txt) — 上下文視窗壓縮、會話恢復、GoAway 訊號
