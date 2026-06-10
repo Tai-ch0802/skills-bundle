@@ -228,7 +228,7 @@ license: 完整條款請見 LICENSE.txt
 
 **強制流程：** 代理（一次）→ 會話（每次執行）。`model`/`system`/`tools` 存在於代理上，絕不是會話上。請參閱 `shared/managed-agents-overview.md` 以取得完整的閱讀指南、beta 標頭和陷阱。
 
-**Beta 標頭：** `managed-agents-2026-04-01` — SDK 會自動為所有 `client.beta.{agents,environments,sessions,vaults,memory_stores}.*` 呼叫設定此標頭。技能 API 使用 `skills-2025-10-02`，檔案 API 使用 `files-api-2025-04-14`，但你不需要為 `/v1/skills` 和 `/v1/files` 以外的端點明確傳遞這些標頭。
+**Beta 標頭：** `managed-agents-2026-04-01` — SDK 會自動為所有 `client.beta.{agents,environments,sessions,vaults,memory_stores,deployments,deployment_runs}.*` 呼叫設定此標頭。技能 API 使用 `skills-2025-10-02`，檔案 API 使用 `files-api-2025-04-14`，但你不需要為 `/v1/skills` 和 `/v1/files` 以外的端點明確傳遞這些標頭。
 
 **子命令** — 透過 `/claude-api <subcommand>` 直接呼叫：
 
@@ -236,11 +236,14 @@ license: 完整條款請見 LICENSE.txt
 |---|---|
 | `managed-agents-onboard` | 引導使用者從頭開始設定管理代理。**立即閱讀 `shared/managed-agents-onboarding.md`** 並遵循其訪談腳本：心智模型 → 了解或探索分支 → 範本設定 → 會話設定 → 輸出程式碼。不要總結 — 執行訪談。 |
 
-**閱讀指南：** 從 `shared/managed-agents-overview.md` 開始，接著閱讀各主題的 `shared/managed-agents-*.md` 檔案（核心、環境、工具、事件、結果、多代理、webhooks、記憶體、用戶端模式、入職、API 參考）。對於 Python、TypeScript、Go、Ruby、PHP 和 Java，閱讀 `{lang}/managed-agents/README.md` 以獲取程式碼範例。對於 cURL，閱讀 `curl/managed-agents.md`。**代理是持久的 — 建立一次，依 ID 引用。** 儲存由 `agents.create` 回傳的代理 ID，並將其傳遞給後續所有的 `sessions.create`；不要在請求路徑中呼叫 `agents.create`。Anthropic CLI 是一種從版本控制的 YAML（URL 位於 `shared/live-sources.md`）建立代理和環境的便捷方式。如果你需要的綁定沒有顯示在語言 README 中，請從 `shared/live-sources.md` WebFetch 相關項目，而不是猜測。C# 目前沒有管理代理支援；請使用 `curl/managed-agents.md` 中的原始 HTTP 作為參考。
+**閱讀指南：** 從 `shared/managed-agents-overview.md` 開始，接著閱讀各主題的 `shared/managed-agents-*.md` 檔案（核心、環境、工具、事件、結果、多代理、webhooks、記憶體、排程部署、用戶端模式、入職、API 參考）。對於 Python、TypeScript、Go、Ruby、PHP 和 Java，閱讀 `{lang}/managed-agents/README.md` 以獲取程式碼範例。對於 cURL，閱讀 `curl/managed-agents.md`。**代理是持久的 — 建立一次，依 ID 引用。** 儲存由 `agents.create` 回傳的代理 ID，並將其傳遞給後續所有的 `sessions.create`；不要在請求路徑中呼叫 `agents.create`。Anthropic CLI 是一種從版本控制的 YAML（URL 位於 `shared/live-sources.md`）建立代理和環境的便捷方式。如果你需要的綁定沒有顯示在語言 README 中，請從 `shared/live-sources.md` WebFetch 相關項目，而不是猜測。C# 已透過 `client.Beta.Agents` 及相關命名空間提供 beta 管理代理支援。
 
 **當使用者想從頭開始設定管理代理時**（例如「我該如何開始」、「引導我建立一個」、「設定一個新的代理」）：閱讀 `shared/managed-agents-onboarding.md` 並執行其訪談 — 與 `managed-agents-onboard` 子命令的流程相同。
 
 **當使用者詢問「我該如何為 X 撰寫用戶端程式碼」時：** 取用 `shared/managed-agents-client-patterns.md` — 涵蓋無損串流重新連線、`processed_at` 佇列/處理閘門、中斷、`tool_confirmation` 往返、正確的閒置/終止中斷閘門、閒置後狀態競爭、串流優先排序、檔案掛載陷阱、透過自訂工具在主機端保留憑證等。
+
+**當使用者想要讓代理按照排程執行時**（cron、「每天晚上」、「每週報告」）：閱讀 `shared/managed-agents-scheduled-deployments.md` — 部署會按照 cron 排程自主啟動會話，並具備執行紀錄、重試機制和自動暫停功能。
+
 
 ---
 
