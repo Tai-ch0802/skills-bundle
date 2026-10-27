@@ -334,7 +334,7 @@ skills-bundle/
 └── package.json
 ```
 
-> **Note**: 49 skills from upstream repos (Antigravity Kit, Anthropic, Gemini) are **not stored locally**. They are downloaded from GitHub at install time via the `REMOTE_SKILLS` config in `bin/install.mjs`.
+> **Note**: 49 skills from upstream repos (Antigravity Kit, Anthropic, Gemini) are **not stored locally**. They are downloaded from GitHub at install time via the `REMOTE_SKILLS` config in `bin/install.mjs`. Each upstream is pinned to a reviewed commit SHA in `REMOTE_REFS` — the installer never follows an upstream `main` branch directly; pins are bumped through reviewed sync PRs.
 
 ## License
 
