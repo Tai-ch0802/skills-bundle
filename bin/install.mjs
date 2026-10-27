@@ -297,6 +297,16 @@ const REMOTE_SKILLS = {
   'vertex-ai-api-dev': { repo: 'google-gemini/gemini-skills', path: 'skills/vertex-ai-api-dev', branch: 'main' },
 };
 
+// Pinned upstream commits for REMOTE_SKILLS (supply-chain safety).
+// Installs download exactly these commits instead of following each upstream's `main`,
+// so a compromised or force-pushed upstream branch cannot silently change what users install.
+// Bump a pin only through a reviewed PR (the sync-upstream-* workflows instruct Jules to do this).
+const REMOTE_REFS = {
+  'anthropics/skills': 'dbd4588f9e1033efb41dad4bef2f7947c8993d44',
+  'vudovn/antigravity-kit': '549ba3dc2eb1d40fccb5b6d792eba4101c80cd69',
+  'google-gemini/gemini-skills': 'ee9da52195752ca83c2fca701d96bcb5a9c08d2d',
+};
+
 const DEPENDENCIES = {
   // --- SDD Pack ---
   prd: [],
@@ -503,18 +513,24 @@ function downloadRemoteSkill(skill, destBase) {
   if (!config) return false;
 
   const destPath = join(destBase, skill);
-  const tarballUrl = `https://github.com/${config.repo}/archive/refs/heads/${config.branch}.tar.gz`;
+  const ref = REMOTE_REFS[config.repo];
+  if (!ref || !/^[0-9a-f]{40}$/.test(ref)) {
+    console.error(chalk.red(`   ❌ No pinned commit for ${config.repo} in REMOTE_REFS; refusing to download an unpinned branch`));
+    return false;
+  }
+  const tarballUrl = `https://github.com/${config.repo}/archive/${ref}.tar.gz`;
   const tmpTar = join(destBase, `.tmp-${skill}.tar.gz`);
 
   try {
-    console.log(chalk.dim(`   ⏬ Downloading ${skill} from ${config.repo}...`));
+    console.log(chalk.dim(`   ⏬ Downloading ${skill} from ${config.repo}@${ref.slice(0, 7)}...`));
 
     // Download tarball using curl (available on all platforms)
-    execSync(`curl -sL "${tarballUrl}" -o "${tmpTar}"`, { stdio: 'pipe' });
+    // -f: fail on HTTP errors instead of saving an error page as the tarball
+    execSync(`curl -fsSL "${tarballUrl}" -o "${tmpTar}"`, { stdio: 'pipe' });
 
     // Extract only the target skill directory
     mkdirSync(destPath, { recursive: true });
-    // The tarball contains a root dir like "skills-main/", so we strip 2 components
+    // The tarball contains a root dir like "skills-<sha>/", so we strip 2 components
     // and match only the target path
     const stripComponents = config.path.split('/').length + 1; // +1 for the archive root dir
     execSync(
